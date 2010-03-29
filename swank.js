@@ -299,7 +299,13 @@ assert.equal("b", s.readchar());
 assert.equal("c", s.readchar());
 assert.equal(3, s.pos());
 
-/* TBD: test empty stream */
+s = new StringInputStream("");
+assert.equal(0, s.pos());
+assert["throws"](function () { s.ungetc("z"); });
+assert["throws"](function () { s.ungetc(""); });
+assert.equal(null, s.getc());
+assert["throws"](function () { s.readchar(); });
+assert.equal(0, s.pos());
 
 function test_read (str, o) {
   assert.equal(str, repr(o));
