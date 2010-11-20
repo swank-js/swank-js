@@ -1,7 +1,5 @@
 // -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t -*-
 
-var assert = require("assert");
-
 var I = {};
 
 function _symbol (name) {
@@ -245,98 +243,16 @@ function readFromString (str) {
   return new LispReader(new StringInputStream(str)).read();
 }
 
-assert.equal(S("zzz"), S("zzz"));
-assert.deepEqual(cons(1, cons(2, cons(3, nil))), list(1, 2, 3));
-assert.equal("abc", car(cons("abc", "def")));
-assert.equal("def", cdr(cons("abc", "def")));
-assert.equal(nil, list());
-assert.ok(consp(cons(1, 2)));
-assert.ok(!consp(nil));
-assert.ok(listp(cons(1, 2)));
-assert.ok(listp(list(1, 2)));
-assert.ok(listp(nil));
-assert.ok(nullp(nil));
-assert.ok(!nullp(cons(1, 2)));
-assert.ok(!nullp(1));
-assert.deepEqual(list(), reverse(list()));
-assert.deepEqual(list(1), reverse(list(1)));
-assert.deepEqual(list(3, 2, 1), reverse(list(1, 2, 3)));
-
-var s = new StringInputStream("abc");
-assert.equal(0, s.pos());
-assert.equal("a", s.getc());
-assert.equal(1, s.pos());
-assert.equal("b", s.readchar());
-assert.equal(2, s.pos());
-assert.equal("c", s.readchar());
-assert.equal(3, s.pos());
-assert.equal(null, s.getc());
-assert.equal(3, s.pos());
-assert["throws"](function () { s.readchar(); });
-assert.equal(3, s.pos());
-s.ungetc("c");
-assert.equal(2, s.pos());
-assert.equal("c", s.getc());
-assert.equal(3, s.pos());
-assert["throws"](function () { s.ungetc("z"); });
-assert.equal(3, s.pos());
-s.ungetc("c");
-s.ungetc("b");
-assert.equal(1, s.pos());
-assert.equal("b", s.getc());
-assert.equal("c", s.getc());
-assert.equal(3, s.pos());
-s.ungetc("c");
-s.ungetc("b");
-s.ungetc("a");
-
-assert.equal(0, s.pos());
-assert["throws"](function () { s.ungetc("z"); });
-assert["throws"](function () { s.ungetc(""); });
-assert.equal(0, s.pos());
-assert.equal("a", s.readchar());
-assert.equal("b", s.readchar());
-assert.equal("c", s.readchar());
-assert.equal(3, s.pos());
-
-s = new StringInputStream("");
-assert.equal(0, s.pos());
-assert["throws"](function () { s.ungetc("z"); });
-assert["throws"](function () { s.ungetc(""); });
-assert.equal(null, s.getc());
-assert["throws"](function () { s.readchar(); });
-assert.equal(0, s.pos());
-
-function test_read (str, o) {
-  assert.equal(str, repr(o));
-  var r = readFromString(str);
-  assert.deepEqual(o, r);
-  assert.equal(str, repr(r));
-};
-
-test_read("ZZZ", S("zzz"));
-test_read("'ZZZ", list(S("quote"), S("zzz")));
-test_read('"zzz"', "zzz");
-test_read('\'"zzz"', list(S("quote"), "zzz"));
-test_read("()", nil);
-test_read("(1)", list(1));
-test_read("(1 2)", list(1, 2));
-test_read("(1 2 EPRST)", list(1, 2, S("eprst")));
-test_read('(1 2 EPRST ("abra" "kodabra"))',
-          list(1, 2, S("eprst"), list("abra", "kodabra")));
-test_read('(1 2 EPRST ("abra" . "kodabra"))',
-          list(1, 2, S("eprst"), cons("abra", "kodabra")));
-test_read('(1 2 EPRST ("abra" "kodabra" .SCHWABBRA))',
-          list(1, 2, S("eprst"), list("abra", "kodabra", S(".schwabbra"))));
-test_read('(1 2 EPRST ("abra" "kodabra" .SCHWABBRA . QQQ))',
-          list(1, 2, S("eprst"),
-               cons("abra",cons("kodabra", cons(S(".schwabbra"), S("QQQ"))))));
-test_read('(1 2 EPRST \'("abra" "kodabra" .SCHWABBRA . QQQ))',
-          list(1, 2, S("eprst"),
-               list(S("quote"),
-                    cons("abra", cons("kodabra", cons(S(".schwabbra"), S("QQQ")))))));
-test_read("(1 2 3)", list(1, 2, 3));
-test_read("(1 2 3 (4 5 6))", list(1, 2, 3, list(4, 5, 6)));
-test_read("((4 5 6) . 7)", cons(list(4, 5, 6), 7));
-test_read("((4 5 6) 7 8 . :EPRST)",
-          cons(list(4, 5, 6), cons(7, cons(8, S(":EPRST")))));
+exports.S = S;
+exports.cons = cons;
+exports.consp = consp;
+exports.car = car;
+exports.cdr = cdr;
+exports.nil = nil;
+exports.nullp = nullp;
+exports.listp = listp;
+exports.list = list;
+exports.reverse = reverse;
+exports.repr = repr;
+exports.StringInputStream = StringInputStream;
+exports.readFromString = readFromString;
