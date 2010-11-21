@@ -9,8 +9,13 @@ var handler = new swh.Handler(new swh.Executive({ pid: 4242 }));
 handler.on(
   "response", function (response) {
     assert.ok(expected.length > 0);
+    assert.ok(typeof(response) == "string");
+    // console.log("response: %s", response);
     var expectedResponse = expected.shift();
-    assert.equal(expectedResponse, response);
+    if (expectedResponse instanceof RegExp)
+      assert.ok(expectedResponse.test(response));
+    else
+      assert.equal(expectedResponse, response);
   });
 
 function request (str) {
@@ -42,5 +47,17 @@ request('(:emacs-rex (swank:listener-eval "undefined") "JS" :repl-thread 5)',
 request('(:emacs-rex (swank:autodoc \'("zzzz" swank::%cursor-marker%) :print-right-margin 236)' +
         ' "COMMON-LISP-USER" :repl-thread 6)',
         '(:return (:ok :not-available) 6)');
+
+request('(:emacs-rex (swank:listener-eval "_swank.output(\'hello world\\\\n\')") "JS" :repl-thread 7)',
+        '(:write-string "hello world\n")',
+        '(:return (:ok nil) 7)');
+
+request('(:emacs-rex (swank:listener-eval "_swank.output(1234)") "JS" :repl-thread 8)',
+        '(:write-string "1234")',
+        '(:return (:ok nil) 8)');
+
+request('(:emacs-rex (swank:listener-eval "zzz") "JS" :repl-thread 9)',
+        /^\(:write-string "ReferenceError: zzz is not defined(.|\n)*"\)$/,
+        '(:return (:ok nil) 9)');
 
 // TBD: debugger

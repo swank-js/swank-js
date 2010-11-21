@@ -2,18 +2,11 @@
 var net = require("net");
 var swh = require("./swank-handler");
 var swp = require("./swank-protocol");
-var Script = process.binding('evals').Script;
-var evalcx = Script.runInContext;
 
 var server = net.createServer(
   function (stream) {
-    var context = Script.createContext();
-    for (var i in global) context[i] = global[i];
-    context.module = module;
-    context.require = require;
     var handler = new swh.Handler(
-      new swh.Executive(
-        { evaluate: function (str) { return evalcx(str, context, "repl"); } }));
+      new swh.Executive());
     var parser = new swp.SwankParser(
       function onMessage (message) {
         handler.receive(message);
@@ -35,4 +28,9 @@ var server = net.createServer(
   });
 server.listen(4005, "localhost");
 
+// TBD: print connect/disconnect notifications
 // TBD: handle reader errors
+
+// function location determination:
+// for code loaded from scripts: direct (if possible)
+// for code entered via C-M-x etc.: use some kind of translation scheme

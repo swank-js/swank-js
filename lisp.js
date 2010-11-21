@@ -357,6 +357,7 @@ function plainList (l, spec) {
 };
 
 function fromLisp (o, spec) {
+  spec = spec || "@";
   if (typeof(spec) == "string") {
     switch (spec) {
     case 'S':
@@ -511,6 +512,7 @@ function plainListToLisp (o, spec) {
 };
 
 function toLisp (o, spec) {
+  spec = spec || "@";
   if (typeof(spec) == "string") {
     switch (spec) {
     case 'S':

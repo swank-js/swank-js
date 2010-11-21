@@ -119,7 +119,7 @@ var CONV_ERROR = {};
 function test_conversion(spec, source, expectedResult, reconverted) {
   var r, l = readFromString(source);
   try {
-    r = fromLisp(l, spec);
+    r = spec === null ? fromLisp(l) : fromLisp(l, spec);
   } catch (e) {
     if (e instanceof TypeError && /^error converting/.test(e.message))
       r = CONV_ERROR;
@@ -128,11 +128,14 @@ function test_conversion(spec, source, expectedResult, reconverted) {
   }
   assert.deepEqual(expectedResult, r);
   if (r !== CONV_ERROR)
-    assert.equal(reconverted || source, repr(toLisp(r, spec)));
+    assert.equal(reconverted || source, repr(spec === null ? toLisp(r) : toLisp(r, spec)));
 }
 
 test_conversion("N", "1", 1);
 test_conversion("@", '(test nil () 123 "456" :zzz (1 2 3) (4 . 5))',
+                ["test", null, null, 123, "456", ":zzz", [1, 2, 3], [4, 5]],
+                '("test" nil nil 123 "456" ":zzz" (1 2 3) (4 5))');
+test_conversion(null, '(test nil () 123 "456" :zzz (1 2 3) (4 . 5))',
                 ["test", null, null, 123, "456", ":zzz", [1, 2, 3], [4, 5]],
                 '("test" nil nil 123 "456" ":zzz" (1 2 3) (4 5))');
 test_conversion(["N:one"], "(1)", { one: 1 });
@@ -233,6 +236,4 @@ assert.equal("(abc 19 :def)", repr(toLisp({ x: 19 }, [S("abc"), "N:x", S(":def")
 assert.equal("nil", repr(toLisp(null, "@")));
 assert.equal("nil", repr(toLisp(null, "_")));
 
-// function location determination:
-// for code loaded from scripts: direct (if possible)
-// for code entered via C-M-x etc.: use some kind of translation scheme
+// TBD: toLisp should use "@" as spec by default

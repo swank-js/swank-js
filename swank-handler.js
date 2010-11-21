@@ -1,5 +1,7 @@
 // -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t; js-run: "swank-handler-tests.js" -*-
 var EventEmitter = require("events").EventEmitter;
+var Script = process.binding('evals').Script;
+var evalcx = Script.runInContext;
 var util = require("util");
 var lisp = require("./lisp");
 var S = lisp.S, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
@@ -7,6 +9,8 @@ var S = lisp.S, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
 
 function Handler (executive) {
   this.executive = executive;
+  var self = this;
+  this.executive.on("output", function (str) { self.output(str); });
 };
 
 util.inherits(Handler, EventEmitter);
@@ -67,15 +71,38 @@ Handler.prototype.receive = function receive (message) {
   default:
     // FIXME: handle unknown commands
   }
-  var response = toLisp({ r: r, id: d.id },
-                        [S(":return"), ">:r", ["S:status", "_:result"], "N:id"]);
-  this.emit("response", repr(response));
+  this.sendResponse({ r: r, id: d.id },
+                    [S(":return"), ">:r", ["S:status", "_:result"], "N:id"]);
+};
+
+Handler.prototype.output = function output (str) {
+  this.sendResponse([S(":write-string"), str]);
+};
+
+Handler.prototype.sendResponse = function sendResponse(response, spec)
+{
+  this.emit("response", repr(toLisp(response, spec || "@")));
 };
 
 function Executive (options) {
   options = options || {};
   this.pid = options.hasOwnProperty("pid") ? options.pid : null;
-  this.evaluate = options.hasOwnProperty("evaluate") ? options.evaluate : null;
+  this.setupContext();
+};
+
+util.inherits(Executive, EventEmitter);
+
+Executive.prototype.setupContext = function setupContext () {
+  this.context = Script.createContext();
+  for (var i in global) this.context[i] = global[i];
+  this.context.module = module;
+  this.context.require = require;
+  var self = this;
+  this.context._swank = {
+    output: function output (arg) {
+      self.emit("output", "" + arg);
+    }
+  };
 };
 
 Executive.prototype.connectionInfo = function connectionInfo () {
@@ -91,9 +118,10 @@ Executive.prototype.createRepl = function createRepl () {
 Executive.prototype.listenerEval = function listenerEval (str) {
   var r;
   try {
-    r = this.evaluate ? this.evaluate(str) : eval(str);
+    r = evalcx(str, this.context, "repl");
   } catch (e) {
-    r = e;
+    r = undefined;
+    this.emit("output", e.stack);
   }
   return r === undefined ? [] : [util.inspect(r)];
 };
