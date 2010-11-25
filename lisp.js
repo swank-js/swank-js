@@ -360,10 +360,16 @@ function fromLisp (o, spec) {
   spec = spec || "@";
   if (typeof(spec) == "string") {
     switch (spec) {
+    case 'B':
+      return naturalValue(o) !== null;
     case 'S':
       if (!symbolp(o))
         throw _conversionError(o, spec);
       return nullp(o) ? null : o.name;
+    case 'K':
+      if (!symbolp(o) || (!nullp(o) && !/:/.test(o.name)))
+        throw _conversionError(o, spec);
+      return nullp(o) ? null : o.name.replace(/^:/, "");
     case 's':
       if (typeof(o) != "string")
         throw _conversionError(o, spec);
@@ -390,7 +396,7 @@ function fromLisp (o, spec) {
 function naturalValueToLisp (v) {
   if (v === null)
     return nil;
-  if (typeof(v) == "number" || typeof(v) == "string" || symbolp(v))
+  if (typeof(v) == "number" || typeof(v) == "string" || symbolp(v) || consp(v))
     return v;
   if (v instanceof Array) {
     var r = nil;
@@ -515,14 +521,17 @@ function toLisp (o, spec) {
   spec = spec || "@";
   if (typeof(spec) == "string") {
     switch (spec) {
+    case 'B':
+      return !o || o === nil ? nil : S("t");
     case 'S':
+    case 'K':
       if (symbolp(o))
         return o;
       if (o === null)
         return nil;
       if (typeof(o) != "string")
         throw _conversionError(o, spec);
-      return S(o);
+      return S(spec == "S" ? o : ":" + o);
     case 's':
       if (typeof(o) != "string")
         throw _conversionError(o, spec);

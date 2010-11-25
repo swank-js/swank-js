@@ -132,6 +132,12 @@ function test_conversion(spec, source, expectedResult, reconverted) {
 }
 
 test_conversion("N", "1", 1);
+test_conversion("K", ":abc", "abc");
+test_conversion("K", "nil", null);
+test_conversion("B", "t", true);
+test_conversion("B", "nil", false);
+test_conversion("B", "123", true, "t");
+test_conversion("B", ":zzz", true, "t");
 test_conversion("@", '(test nil () 123 "456" :zzz (1 2 3) (4 . 5))',
                 ["test", null, null, 123, "456", ":zzz", [1, 2, 3], [4, 5]],
                 '("test" nil nil 123 "456" ":zzz" (1 2 3) (4 5))');
@@ -220,15 +226,15 @@ test_conversion(["S:name", ">*:dict", { x: "N", y: "S" }],
                 '(:somename :x 32 :y :zzz)',
                 { name: ":somename", dict: { x: 32, y: ":zzz" } });
 
-test_conversion({ x: "N", l: { name: "theList", spec: ["S:name", "N:n"] },
+test_conversion({ x: "N", l: { name: "theList", spec: ["S:name", "N:n", "K:keyword"] },
                   d: { name: "dict1", spec: { a: "N", b: "N" } },
                   d2: { spec: { a: "N", b: "N" } }},
-                '(:x 99 :l (zzz 42) :d (:a 11 :b 12) :d2 (:a 1 :b 2))',
+                '(:x 99 :l (zzz 42 :eprst) :d (:a 11 :b 12) :d2 (:a 1 :b 2))',
                 { x: 99,
-                  theList: { name: "zzz", n: 42 },
+                  theList: { name: "zzz", n: 42, keyword: "eprst" },
                   dict1: { a: 11, b: 12 },
                   d2: { a: 1, b : 2 } },
-                '(:d (:a 11 :b 12) :d2 (:a 1 :b 2) :l (zzz 42) :x 99)');
+                '(:d (:a 11 :b 12) :d2 (:a 1 :b 2) :l (zzz 42 :eprst) :x 99)');
 
 assert.equal("(:abc 12 :def 4242)", repr(toLisp({ abc: 12, def: 4242 }, "@")));
 assert.equal("(:abc 19)", repr(toLisp({ x: 19 }, [S(":abc"), "N:x"])));
