@@ -189,3 +189,5 @@ list/select remotes along the lines of
 catching errors on the client: window.onerror
 http://stackoverflow.com/questions/951791/javascript-global-error-handling
 */
+
+// TBD: add \n to messages from remotes / executive
