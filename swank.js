@@ -41,7 +41,6 @@ function BrowserRemote (name, client) {
       // TBD: handle parse errors
       // TBD: validate incoming message (id, etc.)
       console.log("message from browser: %s", JSON.stringify(m));
-      // var m = JSON.parse(message);
       switch(m.op) {
       case "output":
         this.output(m.str);
@@ -76,7 +75,7 @@ BrowserRemote.prototype.id = function id () {
 };
 
 BrowserRemote.prototype.evaluate = function evaluate (id, str) {
-  this.client.send(JSON.stringify({ id: id, code: str }));
+  this.client.send({ id: id, code: str });
 };
 
 var httpServer = http.createServer(

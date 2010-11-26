@@ -1,8 +1,7 @@
-var SwankJS = {};
+var SwankJS = { socket: null };
 
 // TBD: check message contents
 // TBD: exception handling
-// TBD: don't rely upon native json
 // TBD: trim stack trace excluding everything starting from swankjs_evaluate line
 
 SwankJS.debug = function debug () {
@@ -17,31 +16,36 @@ SwankJS.debug = function debug () {
   debug.apply(console, args);
 };
 
+SwankJS.output = function output (str) {
+  if (this.socket)
+    this.socket.send({ op: "output", str: str });
+};
+
 SwankJS.setup = function setup () {
   var self = this;
-  var socket = new io.Socket();
-  socket.on(
+  this.socket = new io.Socket();
+  this.socket.on(
     "connect",
     function() {
       self.debug("connected");
     });
-  socket.on(
-    "message", function swankjs_evaluate (message) {
-      self.debug("eval: %o", message);
-      var m = JSON.parse(message);
+  this.socket.on(
+    "message", function swankjs_evaluate (m) {
+      self.debug("eval: %o", m);
+      // var m = JSON.parse(message);
       try {
         var r = window.eval(m.code);
       } catch (e) {
         self.debug("error = %s", String(e));
-        socket.send({ op: "result", id: m.id,
+        self.socket.send({ op: "result", id: m.id,
                       error: String(e) + "\n" + swank_printStackTrace({ e: e }).join("\n") });
         return;
       }
       self.debug("result = %s", String(r));
-      socket.send({ op: "result", id: m.id, error: null, values: r === undefined ? [] : [String(r)] }); });
-  socket.on(
+      self.socket.send({ op: "result", id: m.id, error: null, values: r === undefined ? [] : [String(r)] }); });
+  this.socket.on(
     "disconnect", function() {
       self.debug("connected");
     });
-  socket.connect();
+  this.socket.connect();
 };
