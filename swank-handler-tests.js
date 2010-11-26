@@ -26,6 +26,7 @@ function expect () {
 }
 
 function verifyExpectations () {
+  // console.log("expected: %s\n", expected.map(JSON.stringify).join("\n"));
   assert.equal(0, expected.length);
 }
 
@@ -129,12 +130,14 @@ request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 16)',
         '(:return (:ok (:values "R:test/localhost:8080:3 * 10")) 16)');
 
 expect('(:write-string "Remote detached: (test) test/localhost:8080\n")',
-       '(:write-string "Remote selected: (direct) node.js\n")');
+       '(:write-string "Remote selected (auto): (direct) node.js\n")');
 r1.disconnect();
 verifyExpectations();
 
 request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 17)',
         '(:return (:ok (:values "30")) 17)');
+
+// TBD: add higher-level functions for testing remotes
 
 request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 18)',
         '(:return (:ok ((1 :direct "node.js" t) ' +
@@ -161,12 +164,51 @@ request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 23)',
         '(:write-string "WARNING: remote already selected: (direct) node.js\n")',
         '(:return (:ok nil) 23)');
 
+// test sticky remote selection
+expect('(:write-string "Remote attached: (test) test/localhost:8001\n")');
+var r3 = new FakeRemote("test/localhost:8001");
+executive.attachRemote(r3);
+verifyExpectations();
+
+request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 24)',
+        '(:return (:ok ((1 :direct "node.js" t) (4 :test "test/localhost:8001" nil))) 24)');
+
+request('(:emacs-rex (js:select-remote 4 t) "JS" :repl-thread 25)',
+        '(:write-string "Remote selected (sticky): (test) test/localhost:8001\n")',
+        '(:return (:ok nil) 25)');
+
+expect('(:write-string "Remote detached: (test) test/localhost:8001\n")',
+       '(:write-string "Remote selected (auto): (direct) node.js\n")');
+r3.disconnect();
+verifyExpectations();
+
+expect('(:write-string "Remote attached: (test) test/localhost:8001\n")',
+       '(:write-string "Remote selected (auto): (test) test/localhost:8001\n")');
+var r5 = new FakeRemote("test/localhost:8001");
+executive.attachRemote(r5);
+verifyExpectations();
+
+request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 26)',
+        '(:write-string "Remote selected: (direct) node.js\n")',
+        '(:return (:ok nil) 26)');
+
+request('(:emacs-rex (js:select-remote 5 nil) "JS" :repl-thread 27)',
+        '(:write-string "Remote selected: (test) test/localhost:8001\n")',
+        '(:return (:ok nil) 27)');
+
+expect('(:write-string "Remote detached: (test) test/localhost:8001\n")',
+       '(:write-string "Remote selected (auto): (direct) node.js\n")');
+r5.disconnect();
+verifyExpectations();
+
+expect('(:write-string "Remote attached: (test) test/localhost:8001\n")');
+var r6 = new FakeRemote("test/localhost:8001");
+executive.attachRemote(r6);
+verifyExpectations();
+
 // TBD: use ## instead of numbers in the tests above (request() should take care of it)
 // TBD: test output from an inactive remote
-// TBD: test remote autoselection (pass t as second argument of js:select-remote)
-// TBD: test remote reattachment (the original one should be disconnected & notified about that)
 // TBD: change prompt upon remote selection
-// TBD: test remote disconnection (disconnectRemote) - both for active and inactive remotes
 // TBD: remote-based prompt (add package() to remote or something like that)
 // TBD: restrict remote names received from the browser (length, chars)
 // TBD: remote name should be formed on the server side using small client side id

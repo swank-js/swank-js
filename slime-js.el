@@ -24,9 +24,18 @@
   (interactive (list (slime-js-read-remote-index)))
   (slime-eval-async `(js:select-remote ,n nil)))
 
+(defun slime-js-sticky-select-remote (n)
+  "Select JS remote by number in sticky mode"
+  (interactive (list (slime-js-read-remote-index)))
+  (slime-eval-async `(js:select-remote ,n t)))
+
 (defslime-repl-shortcut slime-repl-js-select-remote ("select-remote")
   (:handler 'slime-js-select-remote)
   (:one-liner "Select JS remote."))
+
+(defslime-repl-shortcut slime-repl-js-sticky-select-remote ("sticky-select-remote")
+  (:handler 'slime-js-sticky-select-remote)
+  (:one-liner "Select JS remote in sticky mode."))
 
 ;; TBD: sticky-select-remote (the 'sticky' effect is cancelled by select-remote)
 

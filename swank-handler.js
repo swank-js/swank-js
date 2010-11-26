@@ -210,6 +210,7 @@ function Executive (options) {
   this.remotes = [];
   this.attachRemote(new DefaultRemote());
   this.activeRemote = this.remotes[0];
+  this.stickyRemoteFullName = null;
   this.pendingRequests = {};
 };
 
@@ -247,6 +248,11 @@ Executive.prototype.attachRemote = function attachRemote (remote) {
     });
   this.remotes.push(remote);
   this.emit("output", "Remote attached: " + remote.fullName() + "\n");
+  if (this.stickyRemoteFullName !== null &&
+      (!this.activeRemote ||
+       this.activeRemote.fullName() != this.stickyRemoteFullName) &&
+      remote.fullName() == this.stickyRemoteFullName)
+    this.selectRemote(remote.index(), true, true);
 };
 
 Executive.prototype.handleDisconnectRemote = function handleDisconnectRemote (remote) {
@@ -259,7 +265,7 @@ Executive.prototype.handleDisconnectRemote = function handleDisconnectRemote (re
   this.remotes.splice(index, 1);
   this.emit("output", "Remote detached: " + remote.fullName() + "\n");
   if (remote == this.activeRemote)
-    this.selectRemote(this.remotes[0].index());
+    this.selectRemote(this.remotes[0].index(), false, true);
 };
 
 Executive.prototype.connectionInfo = function connectionInfo () {
@@ -287,7 +293,7 @@ Executive.prototype.listRemotes = function listRemotes () {
     }, this);
 };
 
-Executive.prototype.selectRemote = function selectRemote (index, sticky) {
+Executive.prototype.selectRemote = function selectRemote (index, sticky, auto) {
   // TBD: sticky support (should autoselect the remote with message upon attachment)
   for (var i = 0; i < this.remotes.length; ++i) {
     var remote = this.remotes[i];
@@ -297,7 +303,10 @@ Executive.prototype.selectRemote = function selectRemote (index, sticky) {
         return;
       }
       this.activeRemote = remote;
-      this.emit("output", "Remote selected: " + remote.fullName() + "\n");
+      if (!auto)
+        this.stickyRemoteFullName = sticky ? remote.fullName() : null;
+      this.emit("output", "Remote selected" + (auto ? " (auto)" : sticky ? " (sticky)" : "") +
+                ": " + remote.fullName() + "\n");
       return;
     }
   }
