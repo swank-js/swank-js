@@ -1,0 +1,1 @@
+SwankJS.setup();

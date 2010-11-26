@@ -78,12 +78,37 @@ BrowserRemote.prototype.evaluate = function evaluate (id, str) {
   this.client.send({ id: id, code: str });
 };
 
+// proxy code from http://www.catonmat.net/http-proxy-in-nodejs
+function proxyRequest (request, response) {
+  var proxy = http.createClient(8080, "localhost"); // TBD: use configurable host //request.headers['host']);
+  var proxyRequest = proxy.request(request.method, request.url, request.headers);
+  proxyRequest.addListener(
+    'response', function (proxyResponse) {
+      proxyResponse.addListener(
+        'data', function(chunk) {
+          response.write(chunk, 'binary');
+        });
+      proxyResponse.addListener(
+        'end', function() {
+          response.end();
+        });
+      response.writeHead(proxyResponse.statusCode, proxyResponse.headers);
+    });
+  request.addListener('data', function(chunk) {
+    proxyRequest.write(chunk, 'binary');
+  });
+  request.addListener('end', function() {
+    proxyRequest.end();
+  });
+};
+
 var httpServer = http.createServer(
   function serveClient(req, res) {
     var path = url.parse(req.url).pathname, parts, cn;
+    // console.log("%s %s", req.method, req.url);
     if (path && path.indexOf("/swank-js/") != 0) {
-      res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
-      res.end("file not found");
+      // console.log("--> proxy");
+      proxyRequest(req, res);
       return;
     }
     var file = path.substr(1).split('/').slice(1);
@@ -91,6 +116,7 @@ var httpServer = http.createServer(
     var clientFiles = {
       'stacktrace.js': 'stacktrace.js',
       'swank-js.js': 'swank-js.js',
+      'load.js': 'load.js',
       'test.html': 'test.html'
     };
     var types = {
@@ -98,7 +124,7 @@ var httpServer = http.createServer(
       js: "text/javascript; charset=utf-8"
     };
 
-    function write(path){
+    function write (path) {
       if (req.headers['if-none-match'] == clientVersion) {
         res.writeHead(304);
         res.end();
@@ -166,3 +192,5 @@ socket.on(
 // ALSO: http://blog.yoursway.com/2009/07/3-painful-ways-to-obtain-stack-trace-in.html -- onerror in ie gives the innermost frame
 // it should be also possible to 'soft-trace' functions so that they extend Exception objects with caller info as it passes through them
 // TBD: unix domain sockets, normal slime startup
+// TBD: http request logging (for specific remote)
+// TBD: pointing the proxy to different server
