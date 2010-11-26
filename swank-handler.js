@@ -87,6 +87,7 @@ Handler.prototype.receive = function receive (message) {
     }
     this.executive.selectRemote(remoteIndex, sticky);
     break;
+  case "swank:interactive-eval":
   case "swank:listener-eval":
     if (d.form.args.length != 1) {
       console.log("bad args len for SWANK:LISTENER-EVAL -- %s", d.form.args.length);

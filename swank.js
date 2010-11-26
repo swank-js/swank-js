@@ -194,3 +194,5 @@ socket.on(
 // TBD: unix domain sockets, normal slime startup
 // TBD: http request logging (for specific remote)
 // TBD: pointing the proxy to different server
+// TBD: sudden disconnections (flashsocket), sometimes after lots of output (?) --
+// Error: You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.

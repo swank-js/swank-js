@@ -1,4 +1,4 @@
-var SwankJS = { socket: null };
+var SwankJS = { socket: null, connected: false, bufferedOutput: [] };
 
 // TBD: check message contents
 // TBD: exception handling
@@ -16,11 +16,6 @@ SwankJS.debug = function debug () {
   debug.apply(console, args);
 };
 
-SwankJS.output = function output (str) {
-  if (this.socket)
-    this.socket.send({ op: "output", str: str });
-};
-
 SwankJS.setup = function setup () {
   var self = this;
   // TBD: swank-js should proxy all requests to autoadd its scripts
@@ -32,7 +27,13 @@ SwankJS.setup = function setup () {
   this.socket.on(
     "connect",
     function() {
+      self.connected = true;
       self.debug("connected");
+      if (self.bufferedOutput.length > 0) {
+        for (var i = 0; i < self.bufferedOutput.length; ++i)
+          self.output(self.bufferedOutput[i]);
+        self.bufferedOutput = [];
+      }
     });
   this.socket.on(
     "message", function swankjs_evaluate (m) {
@@ -53,6 +54,32 @@ SwankJS.setup = function setup () {
       self.debug("connected");
     });
   this.socket.connect();
+};
+
+// useful functions for the REPL / web apps
+
+SwankJS.output = function output (str) {
+  if (this.socket && this.connected)
+    this.socket.send({ op: "output", str: str });
+  else
+    this.bufferedOutput.push(str);
+};
+
+SwankJS.reload = function reload () {
+  document.location.reload(true);
+};
+
+SwankJS.refreshCSS = function refreshCSS () {
+  // FIXME: this doesn't work in IE yet
+  // FIXME: support refresh of individual CSS files
+  var links = document.getElementsByTagName('link');
+  for (var i = 0; i < links.length; i++) {
+    var link = links[i];
+    if (link.rel.toLowerCase().indexOf('stylesheet') >=0 && link.href) {
+      var h = link.href.replace(/(&|\\?)forceReload=\d+/, "");
+      link.href = h + (h.indexOf('?') >= 0 ? '&' : '?') + 'forceReload=' + Date.now();
+    }
+  }
 };
 
 SwankJS.makeScriptElement = function makeScriptElement (src, content) {
