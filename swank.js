@@ -1,5 +1,6 @@
 // -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t -*-
-var net = require("net"), http = require('http'), io = require('socket.io'), util = require("util");
+var net = require("net"), http = require('http'), io = require('socket.io'), util = require("util"),
+    url = require('url'), fs = require('fs');
 var swh = require("./swank-handler");
 var swp = require("./swank-protocol");
 
@@ -73,21 +74,66 @@ BrowserRemote.prototype.evaluate = function evaluate (id, str) {
 };
 
 var httpServer = http.createServer(
-  function(req, res){
-    // your normal server code
-    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-    // TBD: check message contents
-    // TBD: exception handling
-    // TBD: don't rely upon native json
-    res.end(
-        '<html><body onload="socket.connect()">' +
-        '<script src="/socket.io/socket.io.js"></script>' +
-	'<script>' +
-	'var socket = new io.Socket();' +
-	'socket.on("connect", function() { if (window.console && console.debug) console.debug("connected"); });' +
-	'socket.on("message", function(message) { if (window.console && console.debug) console.debug("eval: %o", message); var m = JSON.parse(message); var r = window.eval(m.code); if (window.console && console.debug) console.debug("r = %o", r); socket.send({ op: "result", id: m.id, values: r === undefined ? [] : [String(r)] }); });' +
-	'socket.on("disconnect", function(){ if (window.console && console.debug) console.debug("connected"); });' +
-	'</script></body></html>');
+  function serveClient(req, res) {
+    var path = url.parse(req.url).pathname, parts, cn;
+    if (path && path.indexOf("/swank-js/") != 0) {
+      res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
+      res.end("file not found");
+      return;
+    }
+    var file = path.substr(1).split('/').slice(1);
+    var clientVersion = "0.1";
+    var clientFiles = {
+      'swank-js.js': 'swank-js.js',
+      'test.html': 'test.html'
+    };
+    var types = {
+      html: "text/html; charset=utf-8",
+      js: "text/javascript; charset=utf-8"
+    };
+
+    function write(path){
+      if (req.headers['if-none-match'] == clientVersion) {
+        res.writeHead(304);
+        res.end();
+      } else {
+        res.writeHead(200, clientFiles[path].headers);
+        res.end(clientFiles[path].content, clientFiles[path].encoding);
+      }
+    };
+
+    var localPath = clientFiles[file];
+
+    if (req.method == 'GET' && localPath !== undefined){
+      // TBD: reenable caching, check datetime of the file
+      // if (path in clientFiles){
+      //   write(path);
+      //   return;
+      // }
+
+      fs.readFile(
+        __dirname + '/client/' + localPath, function(err, data){
+          if (err) {
+            res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
+            res.end("file not found");
+          } else {
+            var ext = localPath.split('.').pop();
+            clientFiles[localPath] = {
+              headers: {
+                'Content-Length': data.length,
+                'Content-Type': types[ext],
+                'ETag': clientVersion
+              },
+              content: data,
+              encoding: ext == 'swf' ? 'binary' : 'utf8'
+            };
+            write(localPath);
+          }
+        });
+    } else {
+      res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
+      res.end("file not found");
+    }
   });
 
 httpServer.listen(8009);
