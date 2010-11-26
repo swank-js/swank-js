@@ -234,7 +234,7 @@ Executive.prototype.attachRemote = function attachRemote (remote) {
   remote.on(
     "result", function (id, values) {
       if (!self.pendingRequests[id]) {
-        emit("output", "WARNING: received late result from " + remote.fullName() + "\n");
+        self.emit("output", "WARNING: received late result from " + remote.fullName() + "\n");
         return;
       }
       try {

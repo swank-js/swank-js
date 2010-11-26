@@ -3,6 +3,7 @@ var SwankJS = {};
 // TBD: check message contents
 // TBD: exception handling
 // TBD: don't rely upon native json
+// TBD: trim stack trace excluding everything starting from swankjs_evaluate line
 
 SwankJS.debug = function debug () {
   if (!window.console)
@@ -25,12 +26,19 @@ SwankJS.setup = function setup () {
       self.debug("connected");
     });
   socket.on(
-    "message", function(message) {
+    "message", function swankjs_evaluate (message) {
       self.debug("eval: %o", message);
       var m = JSON.parse(message);
-      var r = window.eval(m.code);
+      try {
+        var r = window.eval(m.code);
+      } catch (e) {
+        self.debug("error = %s", String(e));
+        socket.send({ op: "result", id: m.id,
+                      error: String(e) + "\n" + swank_printStackTrace({ e: e }).join("\n") });
+        return;
+      }
       self.debug("result = %s", String(r));
-      socket.send({ op: "result", id: m.id, values: r === undefined ? [] : [String(r)] }); });
+      socket.send({ op: "result", id: m.id, error: null, values: r === undefined ? [] : [String(r)] }); });
   socket.on(
     "disconnect", function() {
       self.debug("connected");

@@ -46,6 +46,11 @@ function BrowserRemote (name, client) {
         this.output(m.str);
         break;
       case "result":
+        if (m.error) {
+          this.output(m.error + "\n");
+          this.sendResult(m.id, []);
+          break;
+        }
         this.sendResult(m.id, m.values);
         break;
       default:
@@ -84,6 +89,7 @@ var httpServer = http.createServer(
     var file = path.substr(1).split('/').slice(1);
     var clientVersion = "0.1";
     var clientFiles = {
+      'stacktrace.js': 'stacktrace.js',
       'swank-js.js': 'swank-js.js',
       'test.html': 'test.html'
     };
@@ -146,6 +152,7 @@ socket.on(
     executive.attachRemote(new BrowserRemote("browser", client));
   });
 
+// TBD: proper UTF-8 handling
 // TBD: print connect/disconnect notifications
 // TBD: client-side logging facility
 // TBD: handle reader errors
@@ -159,8 +166,3 @@ socket.on(
 // ALSO: http://blog.yoursway.com/2009/07/3-painful-ways-to-obtain-stack-trace-in.html -- onerror in ie gives the innermost frame
 // it should be also possible to 'soft-trace' functions so that they extend Exception objects with caller info as it passes through them
 // TBD: unix domain sockets, normal slime startup
-
-/*
-(slime-repl-shortcut-eval-async '(js:list-remotes) 'message)
-(slime-repl-shortcut-eval-async '(js:select-remote 2 nil) 'message)
- */

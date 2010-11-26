@@ -175,17 +175,6 @@ request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 23)',
 
 list/select remotes along the lines of
 
-(defun slime-delete-system-fasls (name)
-  "Delete FASLs produced by compiling a system."
-  (interactive (list (slime-read-system-name)))
-  (slime-repl-shortcut-eval-async
-   `(swank:delete-system-fasls ,name)
-   'message))
-
-(defslime-repl-shortcut slime-repl-delete-system-fasls ("delete-system-fasls")
-  (:handler 'slime-delete-system-fasls)
-  (:one-liner "Delete FASLs of an ASDF system."))
-
 catching errors on the client: window.onerror
 http://stackoverflow.com/questions/951791/javascript-global-error-handling
 */
