@@ -178,9 +178,6 @@ socket.on(
     executive.attachRemote(new BrowserRemote("browser", client));
   });
 
-// TBD: proper UTF-8 handling
-// TBD: print connect/disconnect notifications
-// TBD: client-side logging facility
 // TBD: handle reader errors
 
 // function location determination:
@@ -196,3 +193,16 @@ socket.on(
 // TBD: pointing the proxy to different server
 // TBD: sudden disconnections (flashsocket), sometimes after lots of output (?) --
 // Error: You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.
+// TBD: autoreconnect + connection error handling
+// TBD: add SwankJS scripts to all passing html pages (into <head> or <body>)
+// TBD: SwankJS.setup() should do nothing if parent window has SwankJS
+// TBD: it should be possible to serve local files instead of proxying
+// (maybe using https://github.com/felixge/node-paperboy )
+// TBD: handle edge case: new sticky remote connects, old sticky remote disconnects
+// (late disconnect) - as of now, swank-js switches to node.js, but it should
+// instead upon remote detachment see whether another remote with the same name
+// is available
+
+// most important things for initial release:
+// - configurable+selectable proxy target
+// - autoadding of SwankJS scripts with proper iframe parent handling

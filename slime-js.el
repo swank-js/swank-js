@@ -45,13 +45,13 @@
 (defun slime-js-reload ()
   (interactive)
   (slime-js-eval "SwankJS.reload()"
-    #'(lambda ()
+    #'(lambda (v)
         (message "Reloading the page"))))
 
 (defun slime-js-refresh-css ()
   (interactive)
   (slime-js-eval "SwankJS.refreshCSS()"
-    #'(lambda (value)
+    #'(lambda (v)
         (message "Refreshing CSS"))))
 
 (defun slime-js-start-of-toplevel-form ()
@@ -93,11 +93,12 @@
       (slime-js-eval
        (buffer-substring-no-properties start end)
        #'(lambda (v)
-           (goto-char start)
-           (let ((sent-func "<...>"))
-             (when (looking-at "[ \t]*\\([^ \t\n{}][^\n{}]*\\)")
-               (setf sent-func (match-string 1)))
-             (message "Sent: %s" sent-func)))))))
+           (save-excursion
+             (goto-char start)
+             (let ((sent-func "<...>"))
+               (when (looking-at "[ \t]*\\([^ \t\n{}][^\n{}]*\\)")
+                 (setf sent-func (match-string 1)))
+               (message "Sent: %s" sent-func))))))))
 
 (define-minor-mode slime-js-minor-mode
   "Toggle slime-js minor mode
