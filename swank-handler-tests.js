@@ -37,7 +37,8 @@ function request (str) {
 }
 
 request('(:emacs-rex (swank:connection-info) "COMMON-LISP-USER" t 1)',
-        '(:return (:ok (:lisp-implementation (:name "JS" :type "JS" :version "1.5") ' +
+        '(:return (:ok (:encoding (:coding-system "utf-8" :external-format "UTF-8") ' +
+                       ':lisp-implementation (:name "JS" :type "JS" :version "1.5") ' +
                        ':package (:name "JS" :prompt "JS") ' +
                        ':pid 4242)) ' +
         '1)');

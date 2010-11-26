@@ -5,7 +5,7 @@ var evalcx = Script.runInContext;
 var util = require("util");
 var assert = process.assert;
 var lisp = require("./lisp");
-var S = lisp.S, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
+var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
     repr = lisp.repr, fromLisp = lisp.fromLisp, toLisp = lisp.toLisp;
 
 function Handler (executive) {
@@ -47,6 +47,8 @@ Handler.prototype.receive = function receive (message) {
   case "swank:connection-info":
     r.result = toLisp(this.executive.connectionInfo(),
                       { "pid": "N:pid",
+                        "encoding": { name: "encoding", spec: { "coding-system": "s:codingSystem",
+                                                                "external-format": "s:externalFormat" } },
                         "package": { name: "packageSpec", spec: { name: "s", prompt: "s" } },
                         "lisp-implementation": {
                           name: "implementation",
@@ -262,6 +264,7 @@ Executive.prototype.handleDisconnectRemote = function handleDisconnectRemote (re
 
 Executive.prototype.connectionInfo = function connectionInfo () {
   return { pid: this.pid === null ? process.pid : this.pid,
+           encoding: { codingSystem: "utf-8", externalFormat: "UTF-8" },
            packageSpec: { name: "JS", prompt: "JS" },
            implementation: { type: "JS", name: "JS", version: "1.5" } };
 };

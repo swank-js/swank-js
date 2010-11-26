@@ -8,6 +8,7 @@ var executive = new swh.Executive();
 
 var swankServer = net.createServer(
   function (stream) {
+    stream.setEncoding("utf-8");
     var handler = new swh.Handler(executive);
     var parser = new swp.SwankParser(
       function onMessage (message) {

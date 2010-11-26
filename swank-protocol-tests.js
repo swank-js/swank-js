@@ -17,8 +17,7 @@ var parser = new swp.SwankParser(
 function feed (text) {
   for (var i = 1; i < arguments.length; ++i)
     expected.push(arguments[i]);
-  var buffer = new Buffer(text, "utf8");
-  parser.execute(buffer);
+  parser.execute(text);
   assert.equal(0, expected.length);
 }
 
@@ -45,6 +44,6 @@ feed(")",
 
 assert.equal(
   "000015(:return (:ok nil) 1)",
-  swp.buildMessage(list(S(":return"), list(S(":ok"), nil), 1)).toString("utf8"));
+  swp.buildMessage(list(S(":return"), list(S(":ok"), nil), 1)));
 
 // TBD: check unicode string handling (use \uxxxx notation)
