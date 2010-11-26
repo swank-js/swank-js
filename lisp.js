@@ -67,7 +67,7 @@ function cdr (o) {
 
 function repr (x) {
   if (typeof(x) == "string")
-    return '"' + x.replace(/"/g, '\\"') + '"';
+    return '"' + x.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
   return String(x);
 };
 

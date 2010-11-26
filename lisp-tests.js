@@ -88,6 +88,7 @@ test_read("'zzz", list(S("quote"), S("zzz")));
 test_read('"zzz"', "zzz");
 test_read('"zz\nz"', "zz\nz");
 test_read('\'"zzz"', list(S("quote"), "zzz"));
+test_read('"z\\"z\\\\z"', "z\"z\\z");
 test_read("nil", nil);
 test_read("(1)", list(1));
 test_read("(1 2)", list(1, 2));
