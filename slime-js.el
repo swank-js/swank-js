@@ -28,5 +28,12 @@
   (:handler 'slime-js-select-remote)
   (:one-liner "Select JS remote."))
 
-;; TBD: dabbrev in repl?
+;; TBD: sticky-select-remote (the 'sticky' effect is cancelled by select-remote)
+
+;; TBD: dabbrev in repl:
+;; DABBREV--GOTO-START-OF-ABBREV function skips over REPL prompt
+;; because it has property 'intangible' and (forward-char -1) doesn't do
+;; what is expected at the propmpt edge. Must redefine this function
+;; or define and advice for it.
+
 (provide 'slime-js)
