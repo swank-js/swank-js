@@ -234,7 +234,7 @@ Executive.prototype.attachRemote = function attachRemote (remote) {
   remote.on(
     "result", function (id, values) {
       if (!self.pendingRequests[id]) {
-        emit("output", "WARNING: received late result from " + remote.fullName());
+        emit("output", "WARNING: received late result from " + remote.fullName() + "\n");
         return;
       }
       try {
@@ -244,18 +244,18 @@ Executive.prototype.attachRemote = function attachRemote (remote) {
       }
     });
   this.remotes.push(remote);
-  this.emit("output", "Remote attached: " + remote.fullName());
+  this.emit("output", "Remote attached: " + remote.fullName() + "\n");
 };
 
 Executive.prototype.handleDisconnectRemote = function handleDisconnectRemote (remote) {
   remote.detachSelf();
   var index = this.remotes.indexOf(remote);
   if (index < 0) {
-    this.emit("output", "WARNING: disconnectRemote() called for an unknown remote: " + remote.fullName());
+    this.emit("output", "WARNING: disconnectRemote() called for an unknown remote: " + remote.fullName() + "\n");
     return;
   }
   this.remotes.splice(index, 1);
-  this.emit("output", "Remote detached: " + remote.fullName());
+  this.emit("output", "Remote detached: " + remote.fullName() + "\n");
   if (remote == this.activeRemote)
     this.selectRemote(this.remotes[0].index());
 };
@@ -290,15 +290,15 @@ Executive.prototype.selectRemote = function selectRemote (index, sticky) {
     var remote = this.remotes[i];
     if (remote.index() == index) {
       if (remote == this.activeRemote) {
-        this.emit("output", "WARNING: remote already selected: " + remote.fullName());
+        this.emit("output", "WARNING: remote already selected: " + remote.fullName() + "\n");
         return;
       }
       this.activeRemote = remote;
-      this.emit("output", "Remote selected: " + remote.fullName());
+      this.emit("output", "Remote selected: " + remote.fullName() + "\n");
       return;
     }
   }
-  this.emit("output", "WARNING: bad remote index");
+  this.emit("output", "WARNING: bad remote index\n");
 };
 
 exports.Handler = Handler;

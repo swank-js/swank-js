@@ -94,7 +94,7 @@ FakeRemote.prototype.evaluate = function evaluate (id, str) {
 request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 10)',
         '(:return (:ok ((1 :direct "node.js" t))) 10)');
 
-expect('(:write-string "Remote attached: (test) test/localhost:8080")');
+expect('(:write-string "Remote attached: (test) test/localhost:8080\n")');
 var r1 = new FakeRemote("test/localhost:8080");
 executive.attachRemote(r1);
 verifyExpectations();
@@ -102,7 +102,7 @@ verifyExpectations();
 request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 11)',
         '(:return (:ok ((1 :direct "node.js" t) (2 :test "test/localhost:8080" nil))) 11)');
 
-expect('(:write-string "Remote attached: (test) test/localhost:9999")');
+expect('(:write-string "Remote attached: (test) test/localhost:9999\n")');
 var r2 = new FakeRemote("test/localhost:9999");
 executive.attachRemote(r2);
 verifyExpectations();
@@ -116,7 +116,7 @@ request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 13)',
         '(:return (:ok (:values "30")) 13)');
 
 request('(:emacs-rex (js:select-remote 2 nil) "JS" :repl-thread 14)',
-        '(:write-string "Remote selected: (test) test/localhost:8080")',
+        '(:write-string "Remote selected: (test) test/localhost:8080\n")',
         '(:return (:ok nil) 14)');
 
 request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 15)',
@@ -127,8 +127,8 @@ request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 15)',
 request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 16)',
         '(:return (:ok (:values "R:test/localhost:8080:3 * 10")) 16)');
 
-expect('(:write-string "Remote detached: (test) test/localhost:8080")',
-       '(:write-string "Remote selected: (direct) node.js")');
+expect('(:write-string "Remote detached: (test) test/localhost:8080\n")',
+       '(:write-string "Remote selected: (direct) node.js\n")');
 r1.disconnect();
 verifyExpectations();
 
@@ -139,7 +139,7 @@ request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 18)',
         '(:return (:ok ((1 :direct "node.js" t) ' +
         '(3 :test "test/localhost:9999" nil))) 18)');
 
-expect('(:write-string "Remote detached: (test) test/localhost:9999")');
+expect('(:write-string "Remote detached: (test) test/localhost:9999\n")');
 r2.disconnect();
 verifyExpectations();
 
@@ -150,14 +150,14 @@ request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 20)',
         '(:return (:ok ((1 :direct "node.js" t))) 20)');
 
 request('(:emacs-rex (js:select-remote 2 nil) "JS" :repl-thread 21)',
-        '(:write-string "WARNING: bad remote index")',
+        '(:write-string "WARNING: bad remote index\n")',
         '(:return (:ok nil) 21)');
 
 request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 22)',
         '(:return (:ok (:values "30")) 22)');
 
 request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 23)',
-        '(:write-string "WARNING: remote already selected: (direct) node.js")',
+        '(:write-string "WARNING: remote already selected: (direct) node.js\n")',
         '(:return (:ok nil) 23)');
 
 // TBD: use ## instead of numbers in the tests above (request() should take care of it)
