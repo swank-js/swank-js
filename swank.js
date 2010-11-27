@@ -79,9 +79,29 @@ BrowserRemote.prototype.evaluate = function evaluate (id, str) {
 };
 
 // proxy code from http://www.catonmat.net/http-proxy-in-nodejs
+
 function proxyRequest (request, response) {
+  var headersSent = false;
+  var done = false;
+
+  // note on http client error handling:
+  // http://rentzsch.tumblr.com/post/664884799/node-js-handling-refused-http-client-connections
   var proxy = http.createClient(8080, "localhost"); // TBD: use configurable host //request.headers['host']);
+  proxy.addListener(
+    'error', function handleError (e) {
+    console.log("proxy error: %s", e);
+    if (done)
+      return;
+    if (headersSent)
+      response.end();
+    else {
+      response.writeHead(502, {'Content-Type': 'text/plain; charset=utf-8'});
+      response.end("swank-js: unable to forward the request");
+    }
+  });
+
   var proxyRequest = proxy.request(request.method, request.url, request.headers);
+
   proxyRequest.addListener(
     'response', function (proxyResponse) {
       proxyResponse.addListener(
@@ -91,15 +111,19 @@ function proxyRequest (request, response) {
       proxyResponse.addListener(
         'end', function() {
           response.end();
+          done = true;
         });
       response.writeHead(proxyResponse.statusCode, proxyResponse.headers);
+      headersSent = true;
     });
-  request.addListener('data', function(chunk) {
-    proxyRequest.write(chunk, 'binary');
-  });
-  request.addListener('end', function() {
-    proxyRequest.end();
-  });
+  request.addListener(
+    'data', function(chunk) {
+      proxyRequest.write(chunk, 'binary');
+    });
+  request.addListener(
+    'end', function() {
+      proxyRequest.end();
+    });
 };
 
 var httpServer = http.createServer(
@@ -202,6 +226,7 @@ socket.on(
 // (late disconnect) - as of now, swank-js switches to node.js, but it should
 // instead upon remote detachment see whether another remote with the same name
 // is available
+// TBD: handle/add X-Forwarded-For headers
 
 // most important things for initial release:
 // - configurable+selectable proxy target
