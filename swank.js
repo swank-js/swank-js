@@ -80,7 +80,25 @@ BrowserRemote.prototype.evaluate = function evaluate (id, str) {
 
 // proxy code from http://www.catonmat.net/http-proxy-in-nodejs
 
-function proxyRequest (request, response) {
+function HttpListener (server) {}
+
+HttpListener.prototype.clientVersion = "0.1";
+
+HttpListener.prototype.cachedFiles = {};
+
+HttpListener.prototype.clientFiles = {
+  'stacktrace.js': 'stacktrace.js',
+  'swank-js.js': 'swank-js.js',
+  'load.js': 'load.js',
+  'test.html': 'test.html'
+};
+
+HttpListener.prototype.types = {
+  html: "text/html; charset=utf-8",
+  js: "text/javascript; charset=utf-8"
+};
+
+HttpListener.prototype.proxyRequest = function proxyRequest (request, response) {
   var headersSent = false;
   var done = false;
 
@@ -126,71 +144,67 @@ function proxyRequest (request, response) {
     });
 };
 
-var httpServer = http.createServer(
-  function serveClient(req, res) {
-    var path = url.parse(req.url).pathname, parts, cn;
-    // console.log("%s %s", req.method, req.url);
-    if (path && path.indexOf("/swank-js/") != 0) {
-      // console.log("--> proxy");
-      proxyRequest(req, res);
-      return;
-    }
-    var file = path.substr(1).split('/').slice(1);
-    var clientVersion = "0.1";
-    var clientFiles = {
-      'stacktrace.js': 'stacktrace.js',
-      'swank-js.js': 'swank-js.js',
-      'load.js': 'load.js',
-      'test.html': 'test.html'
-    };
-    var types = {
-      html: "text/html; charset=utf-8",
-      js: "text/javascript; charset=utf-8"
-    };
+HttpListener.prototype.sendCachedFile = function sendCachedFile (req, res, path) {
+  if (req.headers['if-none-match'] == this.clientVersion) {
+    res.writeHead(304);
+    res.end();
+  } else {
+    res.writeHead(200, this.cachedFiles[path].headers);
+    res.end(this.cachedFiles[path].content, this.cachedFiles[path].encoding);
+  }
+};
 
-    function write (path) {
-      if (req.headers['if-none-match'] == clientVersion) {
-        res.writeHead(304);
-        res.end();
-      } else {
-        res.writeHead(200, clientFiles[path].headers);
-        res.end(clientFiles[path].content, clientFiles[path].encoding);
-      }
-    };
+HttpListener.prototype.notFound = function notFound (res) {
+  res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
+  res.end("file not found");
+};
 
-    var localPath = clientFiles[file];
+HttpListener.prototype.serveClient = function serveClient(req, res) {
+  var self = this;
+  var path = url.parse(req.url).pathname, parts, cn;
+  // console.log("%s %s", req.method, req.url);
+  if (path && path.indexOf("/swank-js/") != 0) {
+    // console.log("--> proxy");
+    this.proxyRequest(req, res);
+    return;
+  }
+  var file = path.substr(1).split('/').slice(1);
 
-    if (req.method == 'GET' && localPath !== undefined){
-      // TBD: reenable caching, check datetime of the file
-      // if (path in clientFiles){
-      //   write(path);
-      //   return;
-      // }
+  var localPath = this.clientFiles[file];
+  if (req.method == 'GET' && localPath !== undefined){
+    // TBD: reenable caching, check datetime of the file
+    // if (path in this.cachedFiles){
+    //   this.sendCachedFile(req, res, path);
+    //   return;
+    // }
 
-      fs.readFile(
-        __dirname + '/client/' + localPath, function(err, data){
-          if (err) {
-            res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
-            res.end("file not found");
-          } else {
-            var ext = localPath.split('.').pop();
-            clientFiles[localPath] = {
-              headers: {
-                'Content-Length': data.length,
-                'Content-Type': types[ext],
-                'ETag': clientVersion
-              },
-              content: data,
-              encoding: ext == 'swf' ? 'binary' : 'utf8'
-            };
-            write(localPath);
-          }
-        });
-    } else {
-      res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
-      res.end("file not found");
-    }
-  });
+    fs.readFile(
+      __dirname + '/client/' + localPath, function(err, data) {
+        if (err) {
+          console.log("error: %s", err);
+          self.notFound(res);
+        } else {
+          var ext = localPath.split('.').pop();
+          self.cachedFiles[localPath] = {
+            headers: {
+              'Content-Length': data.length,
+              'Content-Type': self.types[ext],
+              'ETag': self.clientVersion
+            },
+            content: data,
+            encoding: ext == 'swf' ? 'binary' : 'utf8'
+          };
+          self.sendCachedFile(req, res, localPath);
+        }
+      });
+  } else {
+    console.log("bad request for /swank-js/ path");
+    this.notFound(res);
+  }
+};
+
+var httpListener = new HttpListener();
+var httpServer = http.createServer(httpListener.serveClient.bind(httpListener));
 
 httpServer.listen(8009);
 
