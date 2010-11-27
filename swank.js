@@ -98,8 +98,61 @@ HttpListener.prototype.types = {
   js: "text/javascript; charset=utf-8"
 };
 
+HttpListener.prototype.scriptBlock =
+  new Buffer(
+    '<script type="text/javascript" src="/socket.io/socket.io.js"></script>' +
+    '<script type="text/javascript" src="/swank-js/stacktrace.js"></script>' +
+    '<script type="text/javascript" src="/swank-js/swank-js.js"></script>');
+
+HttpListener.prototype.findClosingTag = function findClosingTag (buffer, name) {
+  // note: this function is suitable for <head> and <body> tags,
+  // because they don't contain any repeating letters, but
+  // it will not work for tags that have such letters
+  var chars = [];
+  var endChar = ">".charCodeAt(0);
+  name = "</" + name;
+  for (var i = 0; i < name.length; ++i)
+    chars.push(name.charCodeAt(i));
+  for (i = 0; i < buffer.length - chars.length - 1;) {
+    var found = true;
+    if (buffer[i++] != chars[0])
+      continue;
+
+    for (var j = 1; j < chars.length; ++j, ++i) {
+      if (buffer[i] != chars[j]) {
+        found = false;
+        break;
+      }
+    }
+    if (found) {
+      for (var k = i; k < buffer.length; ++k) {
+        if (buffer[k] == endChar)
+          return i - chars.length;
+      }
+    }
+  }
+  return -1;
+};
+
+HttpListener.prototype.injectScripts = function injectScripts (buffer, url) {
+  var p = this.findClosingTag(buffer, "head");
+  if (p < 0) {
+    p = this.findClosingTag(buffer, "body");
+    if (p < 0) {
+      // html blocks without head / body tags aren't that uncommon
+      // console.log("WARNING: unable to inject script block: %s", url);
+      return buffer;
+    }
+  }
+  var newBuf = new Buffer(buffer.length + this.scriptBlock.length);
+  buffer.copy(newBuf, 0, 0, p);
+  this.scriptBlock.copy(newBuf, p, 0);
+  buffer.copy(newBuf, p + this.scriptBlock.length, p);
+  return newBuf;
+};
+
 HttpListener.prototype.proxyRequest = function proxyRequest (request, response) {
-  var headersSent = false;
+  var self = this;
   var done = false;
 
   // note on http client error handling:
@@ -107,32 +160,74 @@ HttpListener.prototype.proxyRequest = function proxyRequest (request, response) 
   var proxy = http.createClient(8080, "localhost"); // TBD: use configurable host //request.headers['host']);
   proxy.addListener(
     'error', function handleError (e) {
-    console.log("proxy error: %s", e);
-    if (done)
-      return;
-    if (headersSent)
-      response.end();
-    else {
+      console.log("proxy error: %s", e);
+      if (done)
+        return;
+      if (headersSent) {
+        response.end();
+        return;
+      }
       response.writeHead(502, {'Content-Type': 'text/plain; charset=utf-8'});
       response.end("swank-js: unable to forward the request");
-    }
   });
 
+  console.log("PROXY: %s %s", request.method, request.url);
   var proxyRequest = proxy.request(request.method, request.url, request.headers);
 
   proxyRequest.addListener(
     'response', function (proxyResponse) {
+      var headersSent = false;
+      var contentType = proxyResponse.headers["content-type"];
+      var statusCode = proxyResponse.statusCode;
+      var headers = {};
+      for (k in proxyResponse.headers) {
+        if (proxyResponse.headers.hasOwnProperty(k))
+          headers[k] = proxyResponse.headers[k];
+      }
+      var chunks = proxyResponse.statusCode == 200 && contentType && /^text\/html\b/.test(contentType) ?
+        [] : null;
+      if (chunks === null) {
+        // FIXME: without this, there were problems with redirects.
+        // I don't quite understand why...
+        response.writeHead(statusCode, headers);
+        headersSent = true;
+      }
       proxyResponse.addListener(
-        'data', function(chunk) {
+        'data', function (chunk) {
+          if (chunks !== null) {
+            chunks.push(chunk);
+            return;
+          }
+          if (!headersSent) {
+            response.writeHead(statusCode, headers);
+            headersSent = true;
+          }
           response.write(chunk, 'binary');
         });
       proxyResponse.addListener(
         'end', function() {
+          if (chunks !== null) {
+            console.log("^^MOD: %s %s", request.method, request.url);
+            var buf = new Buffer(chunks.reduce(function (s, chunk) { return s += chunk.length; }, 0));
+            var p = 0;
+            chunks.forEach(
+              function (chunk) {
+                chunk.copy(buf, p, 0);
+                p += chunk.length;
+              });
+            buf = self.injectScripts(buf, request.url);
+            headers["content-length"] = buf.length;
+            response.writeHead(statusCode, headers);
+            headersSent = true;
+            response.write(buf, 'binary');
+          } else if (!headersSent) {
+            response.writeHead(statusCode, headers);
+            headersSent = true;
+          }
+
           response.end();
           done = true;
         });
-      response.writeHead(proxyResponse.statusCode, proxyResponse.headers);
-      headersSent = true;
     });
   request.addListener(
     'data', function(chunk) {
@@ -241,7 +336,9 @@ socket.on(
 // instead upon remote detachment see whether another remote with the same name
 // is available
 // TBD: handle/add X-Forwarded-For headers
+// TBD: only modify responses with code==200
 
 // most important things for initial release:
-// - configurable+selectable proxy target
-// - autoadding of SwankJS scripts with proper iframe parent handling
+// - configurable+selectable proxy target with Host: header substitution
+// - proper iframe parent handling when setting up SwankJS (test)
+// - proper remote naming

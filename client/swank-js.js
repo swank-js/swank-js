@@ -82,6 +82,9 @@ SwankJS.refreshCSS = function refreshCSS () {
   }
 };
 
+/*
+// we may need this later
+
 SwankJS.makeScriptElement = function makeScriptElement (src, content) {
   var script = document.createElement("script");
   script.type = "text/javascript";
@@ -93,25 +96,6 @@ SwankJS.makeScriptElement = function makeScriptElement (src, content) {
   }
   return script;
 };
+*/
 
-SwankJS.loadScripts = function loadScripts () {
-  var scripts = document.getElementsByTagName("script");
-  var parent = document.getElementsByTagName("head")[0] || document.body;
-  for (var i = 0; i < scripts.length; ++i) {
-    if (scripts[i].src && /\/swank-js\//.test(scripts[i].src)) {
-      this.base = scripts[i].src.replace(/\/swank-js\/.*$/, "");
-      // document.write(
-      //   '<script type="text/javascript" src="' + this.base + '/socket.io/socket.io.js"></script>' +
-      //     '<script type="text/javascript" src="' + this.base + '/swank-js/stacktrace.js"></script>' +
-      //     '<script type="text/javascript">SwankJS.setup();</script>');
-      parent.appendChild(this.makeScriptElement(this.base + "/socket.io/socket.io.js"));
-      parent.appendChild(this.makeScriptElement(this.base + "/swank-js/stacktrace.js"));
-      parent.appendChild(this.makeScriptElement(this.base + "/swank-js/load.js"));
-      break;
-    }
-  }
-  if (i == scripts.length)
-    SwankJS.debug("WARNING: cannot locate /swank-js/ script tag");
-};
-
-SwankJS.loadScripts();
+SwankJS.setup();
