@@ -219,7 +219,7 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
         if (proxyResponse.headers.hasOwnProperty(k))
           headers[k] = proxyResponse.headers[k];
       }
-      var chunks = proxyResponse.statusCode == 200 && contentType && /^text\/html\b/.test(contentType) ?
+      var chunks = proxyResponse.statusCode == 200 && contentType && /^text\/html\b|^application\/xhtml\+xml/.test(contentType) ?
         [] : null;
       if (chunks === null) {
         // FIXME: without this, there were problems with redirects.
