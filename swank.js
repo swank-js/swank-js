@@ -3,6 +3,7 @@ var net = require("net"), http = require('http'), io = require('socket.io'), uti
     url = require('url'), fs = require('fs');
 var swh = require("./swank-handler");
 var swp = require("./swank-protocol");
+var ua = require("./user-agent");
 var config = require("./config");
 
 var DEFAULT_TARGET_HOST = "localhost";
@@ -39,8 +40,8 @@ var swankServer = net.createServer(
   });
 swankServer.listen(4005, "localhost");
 
-function BrowserRemote (name, client) {
-  this.name = name;
+function BrowserRemote (clientInfo, client) {
+  this.name = ua.recognize(clientInfo.userAgent) + (clientInfo.address ? (":" + clientInfo.address) : "");
   this.client = client;
   this.client.on(
     "message", function(m) {
@@ -343,7 +344,20 @@ socket.on(
   "connection", function (client) {
     // new client is here!
     console.log("client connected");
-    executive.attachRemote(new BrowserRemote("browser", client));
+    function handleHandshake (message) {
+      client.removeListener("message", handleHandshake);
+      if (!message.hasOwnProperty("op") || !message.op == "handshake")
+        console.warn("WARNING: bad handshake message: %j", message);
+      else {
+        var address = null;
+        if (client.connection && client.connection.remoteAddress)
+          address = client.connection.remoteAddress;
+        var remote = new BrowserRemote({ address: address, userAgent: message.userAgent }, client);
+        executive.attachRemote(remote);
+        console.log("added remote: %s", remote.fullName());
+      }
+    };
+    client.on("message", handleHandshake);
   });
 
 // TBD: handle reader errors
@@ -371,11 +385,12 @@ socket.on(
 // instead upon remote detachment see whether another remote with the same name
 // is available
 // TBD: handle/add X-Forwarded-For headers
-// TBD: only modify responses with code==200
+// TBD: fix all assert calls: we need (actual, expected) not (expected, actual)
 
 // most important things for initial release:
 // - proper remote naming
-// - browser-based prompt
+// - browser-based prompt -- use (:new-package "COMMON-LISP-USER" "CL-USER") after the remote changes
 // - proper iframe parent handling when setting up SwankJS (test)
+// - add a command for slime :version sync (store version in the config, default to something meaningful)
 // - README
 // - license

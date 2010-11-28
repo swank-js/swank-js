@@ -29,6 +29,7 @@ SwankJS.setup = function setup () {
     function() {
       self.connected = true;
       self.debug("connected");
+      self.socket.send({ op: "handshake", userAgent: navigator.userAgent });
       if (self.bufferedOutput.length > 0) {
         for (var i = 0; i < self.bufferedOutput.length; ++i)
           self.output(self.bufferedOutput[i]);
