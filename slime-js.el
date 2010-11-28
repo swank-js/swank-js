@@ -1,3 +1,37 @@
+(define-slime-contrib slime-js
+  "Emacs-side support for Swank-JS."
+  (:authors "Ivan Shvedunov")
+  (:license "X11-style")
+  (:on-load
+   (add-hook 'slime-event-hooks 'slime-js-event-hook-function))
+  (:on-unload
+   (remove-hook 'slime-event-hooks 'slime-js-event-hook-function)))
+
+(defun slime-js-repl-update-package ()
+  (let ((name (slime-current-package)))
+    (with-current-buffer (slime-output-buffer)
+      (let ((previouse-point (- (point) slime-repl-input-start-mark)))
+        (setf (slime-lisp-package) name
+              (slime-lisp-package-prompt-string) name
+              slime-buffer-package name)
+        (slime-repl-insert-prompt)
+        (when (plusp previouse-point)
+          (goto-char (+ previouse-point slime-repl-input-start-mark)))))))
+
+(defun slime-js-event-hook-function (event)
+  (when (equal "JS" (slime-lisp-implementation-type))
+    (destructure-case event
+      ((:new-package package prompt)
+       (let ((buffer (slime-connection-output-buffer)))
+         (setf (slime-lisp-package) package)
+         (setf (slime-lisp-package-prompt-string) prompt)
+         (when (buffer-live-p buffer)
+           (with-current-buffer buffer
+             (setq slime-buffer-package package)
+             (slime-js-repl-update-package)))
+         t))
+      (t nil))))
+
 (defvar slime-js-remote-history nil
   "History list for JS remote names.")
 
@@ -6,10 +40,10 @@
          (remotes (slime-eval '(js:list-remotes)))
          (remote-names
           (loop for remote in remotes
-                collect (replace-regexp-in-string
-                         "^:" ""
-                         (concat (symbol-name (second remote))
-                                 "/" (third remote)))))
+                collect (concat (third remote)
+                                "/"
+                                (replace-regexp-in-string
+                                 "^:" ""(symbol-name (second remote))))))
          (prompt (or prompt "Remote: "))
          (p (or (position
                  (completing-read prompt (slime-bogus-completion-alist remote-names)

@@ -12,6 +12,7 @@ var handler = new swh.Handler(executive);
 
 handler.on(
   "response", function (response) {
+    // console.log("=> %s", response);
     assert.ok(expected.length > 0);
     assert.ok(typeof(response) == "string");
     // console.log("response: %s", response);
@@ -19,7 +20,8 @@ handler.on(
     if (expectedResponse instanceof RegExp)
       assert.ok(expectedResponse.test(response));
     else
-      assert.equal(expectedResponse, response);
+      assert.equal(expectedResponse, response,
+                   "got response " + response + " instead of " + expectedResponse);
   });
 
 function expect () {
@@ -42,7 +44,7 @@ function request (str) {
 request('(:emacs-rex (swank:connection-info) "COMMON-LISP-USER" t 1)',
         '(:return (:ok (:encoding (:coding-system "utf-8" :external-format "UTF-8") ' +
                        ':lisp-implementation (:name "JS" :type "JS" :version "1.5") ' +
-                       ':package (:name "JS" :prompt "JS") ' +
+                       ':package (:name "NODE" :prompt "NODE") ' +
                        ':pid 4242)) ' +
         '1)');
 
@@ -51,27 +53,27 @@ request('(:emacs-rex (swank:swank-require \'(swank-listener-hooks swank-indentat
         '(:return (:ok nil) 2)');
 
 request('(:emacs-rex (swank:create-repl nil) "COMMON-LISP-USER" t 3)',
-        '(:return (:ok ("JS" "JS")) 3)');
+        '(:return (:ok ("NODE" "NODE")) 3)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 4)',
+request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 4)',
         '(:return (:ok (:values "30")) 4)');
 
-request('(:emacs-rex (swank:listener-eval "undefined") "JS" :repl-thread 5)',
+request('(:emacs-rex (swank:listener-eval "undefined") "NODE" :repl-thread 5)',
         '(:return (:ok nil) 5)');
 
 request('(:emacs-rex (swank:autodoc \'("zzzz" swank::%cursor-marker%) :print-right-margin 236)' +
         ' "COMMON-LISP-USER" :repl-thread 6)',
         '(:return (:ok :not-available) 6)');
 
-request('(:emacs-rex (swank:listener-eval "_swank.output(\'hello world\\\\n\')") "JS" :repl-thread 7)',
+request('(:emacs-rex (swank:listener-eval "_swank.output(\'hello world\\\\n\')") "NODE" :repl-thread 7)',
         '(:write-string "hello world\n")',
         '(:return (:ok nil) 7)');
 
-request('(:emacs-rex (swank:listener-eval "_swank.output(1234)") "JS" :repl-thread 8)',
+request('(:emacs-rex (swank:listener-eval "_swank.output(1234)") "NODE" :repl-thread 8)',
         '(:write-string "1234")',
         '(:return (:ok nil) 8)');
 
-request('(:emacs-rex (swank:listener-eval "zzz") "JS" :repl-thread 9)',
+request('(:emacs-rex (swank:listener-eval "zzz") "NODE" :repl-thread 9)',
         /^\(:write-string "ReferenceError: zzz is not defined(.|\n)*"\)$/,
         '(:return (:ok nil) 9)');
 
@@ -82,6 +84,10 @@ function FakeRemote (name) {
 };
 
 util.inherits(FakeRemote, swh.Remote);
+
+FakeRemote.prototype.prompt = function prompt () {
+  return "FAKE";
+};
 
 FakeRemote.prototype.kind = function kind () {
   return "test";
@@ -95,7 +101,7 @@ FakeRemote.prototype.evaluate = function evaluate (id, str) {
   this.sendResult(id, [ "R:" + this.name + ":" + str.replace(/^\s*|\s*$/g, "") ]);
 };
 
-request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 10)',
+request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 10)',
         '(:return (:ok ((1 :direct "node.js" t))) 10)');
 
 expect('(:write-string "Remote attached: (test) test/localhost:8080\n")');
@@ -103,7 +109,7 @@ var r1 = new FakeRemote("test/localhost:8080");
 executive.attachRemote(r1);
 verifyExpectations();
 
-request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 11)',
+request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 11)',
         '(:return (:ok ((1 :direct "node.js" t) (2 :test "test/localhost:8080" nil))) 11)');
 
 expect('(:write-string "Remote attached: (test) test/localhost:9999\n")');
@@ -111,37 +117,39 @@ var r2 = new FakeRemote("test/localhost:9999");
 executive.attachRemote(r2);
 verifyExpectations();
 
-request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 12)',
+request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 12)',
         '(:return (:ok ((1 :direct "node.js" t) ' +
         '(2 :test "test/localhost:8080" nil) ' +
         '(3 :test "test/localhost:9999" nil))) 12)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 13)',
+request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 13)',
         '(:return (:ok (:values "30")) 13)');
 
-request('(:emacs-rex (js:select-remote 2 nil) "JS" :repl-thread 14)',
+request('(:emacs-rex (js:select-remote 2 nil) "NODE" :repl-thread 14)',
+        '(:new-package "FAKE" "FAKE")',
         '(:write-string "Remote selected: (test) test/localhost:8080\n")',
         '(:return (:ok nil) 14)');
 
-request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 15)',
+request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 15)',
         '(:return (:ok ((1 :direct "node.js" nil) ' +
         '(2 :test "test/localhost:8080" t) ' +
         '(3 :test "test/localhost:9999" nil))) 15)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 16)',
+request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 16)',
         '(:return (:ok (:values "R:test/localhost:8080:3 * 10")) 16)');
 
 expect('(:write-string "Remote detached: (test) test/localhost:8080\n")',
+       '(:new-package "NODE" "NODE")',
        '(:write-string "Remote selected (auto): (direct) node.js\n")');
 r1.disconnect();
 verifyExpectations();
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 17)',
+request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 17)',
         '(:return (:ok (:values "30")) 17)');
 
 // TBD: add higher-level functions for testing remotes
 
-request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 18)',
+request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 18)',
         '(:return (:ok ((1 :direct "node.js" t) ' +
         '(3 :test "test/localhost:9999" nil))) 18)');
 
@@ -149,20 +157,20 @@ expect('(:write-string "Remote detached: (test) test/localhost:9999\n")');
 r2.disconnect();
 verifyExpectations();
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 19)',
+request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 19)',
         '(:return (:ok (:values "30")) 19)');
 
-request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 20)',
+request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 20)',
         '(:return (:ok ((1 :direct "node.js" t))) 20)');
 
-request('(:emacs-rex (js:select-remote 2 nil) "JS" :repl-thread 21)',
+request('(:emacs-rex (js:select-remote 2 nil) "NODE" :repl-thread 21)',
         '(:write-string "WARNING: bad remote index\n")',
         '(:return (:ok nil) 21)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "JS" :repl-thread 22)',
+request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 22)',
         '(:return (:ok (:values "30")) 22)');
 
-request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 23)',
+request('(:emacs-rex (js:select-remote 1 nil) "NODE" :repl-thread 23)',
         '(:write-string "WARNING: remote already selected: (direct) node.js\n")',
         '(:return (:ok nil) 23)');
 
@@ -174,21 +182,24 @@ var r3 = new FakeRemote("test/localhost:8001");
 executive.attachRemote(r3);
 verifyExpectations();
 
-request('(:emacs-rex (js:list-remotes) "JS" :repl-thread 24)',
+request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 24)',
         '(:return (:ok ((1 :direct "node.js" t) (4 :test "test/localhost:8001" nil))) 24)');
 
-request('(:emacs-rex (js:select-remote 4 t) "JS" :repl-thread 25)',
+request('(:emacs-rex (js:select-remote 4 t) "NODE" :repl-thread 25)',
+        '(:new-package "FAKE" "FAKE")',
         '(:write-string "Remote selected (sticky): (test) test/localhost:8001\n")',
         '(:return (:ok nil) 25)');
 
 assert.equal("(test) test/localhost:8001", cfg.getNow("stickyRemote"));
 
 expect('(:write-string "Remote detached: (test) test/localhost:8001\n")',
+       '(:new-package "NODE" "NODE")',
        '(:write-string "Remote selected (auto): (direct) node.js\n")');
 r3.disconnect();
 verifyExpectations();
 
 expect('(:write-string "Remote attached: (test) test/localhost:8001\n")',
+       '(:new-package "FAKE" "FAKE")',
        '(:write-string "Remote selected (auto): (test) test/localhost:8001\n")');
 var r5 = new FakeRemote("test/localhost:8001");
 executive.attachRemote(r5);
@@ -196,17 +207,20 @@ verifyExpectations();
 
 assert.equal("(test) test/localhost:8001", cfg.getNow("stickyRemote"));
 
-request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 26)',
+request('(:emacs-rex (js:select-remote 1 nil) "NODE" :repl-thread 26)',
+        '(:new-package "NODE" "NODE")',
         '(:write-string "Remote selected: (direct) node.js\n")',
         '(:return (:ok nil) 26)');
 
-request('(:emacs-rex (js:select-remote 5 nil) "JS" :repl-thread 27)',
+request('(:emacs-rex (js:select-remote 5 nil) "NODE" :repl-thread 27)',
+        '(:new-package "FAKE" "FAKE")',
         '(:write-string "Remote selected: (test) test/localhost:8001\n")',
         '(:return (:ok nil) 27)');
 
 assert.equal(null, cfg.getNow("stickyRemote"));
 
 expect('(:write-string "Remote detached: (test) test/localhost:8001\n")',
+       '(:new-package "NODE" "NODE")',
        '(:write-string "Remote selected (auto): (direct) node.js\n")');
 r5.disconnect();
 verifyExpectations();
@@ -218,12 +232,12 @@ verifyExpectations();
 
 assert.equal(null, cfg.getNow("stickyRemote"));
 
-request('(:emacs-rex (js:set-target-url "http://localhost:1234/") "JS" :repl-thread 28)',
+request('(:emacs-rex (js:set-target-url "http://localhost:1234/") "NODE" :repl-thread 28)',
         '(:return (:ok nil) 28)');
 
 assert.equal("http://localhost:1234/", cfg.getNow("targetUrl"));
 
-request('(:emacs-rex (js:set-target-url "zzz") "JS" :repl-thread 29)',
+request('(:emacs-rex (js:set-target-url "zzz") "NODE" :repl-thread 29)',
         '(:write-string "WARNING: the URL must contain host and port\n")',
         '(:return (:ok nil) 29)');
 

@@ -13,6 +13,7 @@ function Handler (executive) {
   this.executive = executive;
   var self = this;
   this.executive.on("output", function (str) { self.output(str); });
+  this.executive.on("newPackage", function (name) { self.newPackage(name); });
 };
 
 util.inherits(Handler, EventEmitter);
@@ -137,6 +138,10 @@ Handler.prototype.output = function output (str) {
   this.sendResponse([S(":write-string"), str]);
 };
 
+Handler.prototype.newPackage = function newPackage (name) {
+  this.sendResponse([S(":new-package"), name, name]);
+};
+
 Handler.prototype.sendResponse = function sendResponse(response, spec)
 {
   this.emit("response", repr(toLisp(response, spec || "@")));
@@ -145,6 +150,10 @@ Handler.prototype.sendResponse = function sendResponse(response, spec)
 function Remote () {};
 
 util.inherits(Remote, EventEmitter);
+
+Remote.prototype.prompt = function prompt () {
+  return "JS";
+};
 
 Remote.prototype.kind = function kind () {
   throw new Error("must override Remote.prototype.kind()");
@@ -202,6 +211,10 @@ function DefaultRemote () {
 }
 
 util.inherits(DefaultRemote, Remote);
+
+DefaultRemote.prototype.prompt = function prompt () {
+  return "NODE";
+};
 
 DefaultRemote.prototype.kind = function kind () {
   return "direct";
@@ -293,14 +306,16 @@ Executive.prototype.handleDisconnectRemote = function handleDisconnectRemote (re
 };
 
 Executive.prototype.connectionInfo = function connectionInfo () {
+  var prompt = this.activeRemote.prompt();
   return { pid: this.pid === null ? process.pid : this.pid,
            encoding: { codingSystem: "utf-8", externalFormat: "UTF-8" },
-           packageSpec: { name: "JS", prompt: "JS" },
+           packageSpec: { name: prompt, prompt: prompt },
            implementation: { type: "JS", name: "JS", version: "1.5" } };
 };
 
 Executive.prototype.createRepl = function createRepl () {
-  return { packageName: "JS", prompt: "JS" };
+  var prompt = this.activeRemote.prompt();
+  return { packageName: prompt, prompt: prompt };
 };
 
 Executive.prototype.listenerEval = function listenerEval (str, cont) {
@@ -329,6 +344,7 @@ Executive.prototype.selectRemote = function selectRemote (index, sticky, auto) {
       this.activeRemote = remote;
       if (!auto)
         this.config.set("stickyRemote", sticky ? remote.fullName() : null);
+      this.emit("newPackage", remote.prompt());
       this.emit("output", "Remote selected" + (auto ? " (auto)" : sticky ? " (sticky)" : "") +
                 ": " + remote.fullName() + "\n");
       return;

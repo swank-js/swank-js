@@ -41,7 +41,9 @@ var swankServer = net.createServer(
 swankServer.listen(4005, "localhost");
 
 function BrowserRemote (clientInfo, client) {
-  this.name = ua.recognize(clientInfo.userAgent) + (clientInfo.address ? (":" + clientInfo.address) : "");
+  var userAgent = ua.recognize(clientInfo.userAgent);
+  this.name = userAgent.replace(/ /g, "") + (clientInfo.address ? (":" + clientInfo.address) : "");
+  this._prompt = userAgent.toUpperCase().replace(/ /g, '-');
   this.client = client;
   this.client.on(
     "message", function(m) {
@@ -72,6 +74,10 @@ function BrowserRemote (clientInfo, client) {
 }
 
 util.inherits(BrowserRemote, swh.Remote);
+
+BrowserRemote.prototype.prompt = function prompt () {
+  return this._prompt;
+};
 
 BrowserRemote.prototype.kind = function kind () {
   return "browser";
