@@ -3,6 +3,7 @@ var EventEmitter = require("events").EventEmitter;
 var Script = process.binding('evals').Script;
 var evalcx = Script.runInContext;
 var util = require("util");
+var url = require("url");
 var assert = process.assert;
 var lisp = require("./lisp");
 var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
@@ -73,6 +74,7 @@ Handler.prototype.receive = function receive (message) {
       console.log("bad args len for SWANK:SELECT-REMOTE -- %s", d.form.args.length);
       return; // FIXME
     }
+    // FIXME: get rid of spaghetti
     var remoteIndex, sticky;
     try {
       // FIXME: args should be a cons / NIL
@@ -86,6 +88,22 @@ Handler.prototype.receive = function receive (message) {
       throw e;
     }
     this.executive.selectRemote(remoteIndex, sticky);
+    break;
+  case "js:set-target-url":
+    if (d.form.args.length != 1) {
+      console.log("bad args len for JS:SET-TARGET-URL -- %s", d.form.args.length);
+      return; // FIXME
+    }
+    try {
+      expr = fromLisp(d.form.args[0], "s");
+    } catch (e) {
+      if (e instanceof TypeError) {
+        console.log("can't parse arg -- %s", d.form.args[0]);
+        return; // FIXME
+      }
+      throw e;
+    }
+    this.executive.setTargetUrl(expr);
     break;
   case "swank:interactive-eval":
   case "swank:listener-eval":
@@ -207,11 +225,12 @@ DefaultRemote.prototype.evaluate = function evaluate (id, str) {
 // TBD: rename Executive to Dispatcher
 function Executive (options) {
   options = options || {};
+  assert(options.hasOwnProperty("config") && options.config);
+  this.config = options.config;
   this.pid = options.hasOwnProperty("pid") ? options.pid : null;
   this.remotes = [];
   this.attachRemote(new DefaultRemote());
   this.activeRemote = this.remotes[0];
-  this.stickyRemoteFullName = null;
   this.pendingRequests = {};
 };
 
@@ -249,11 +268,15 @@ Executive.prototype.attachRemote = function attachRemote (remote) {
     });
   this.remotes.push(remote);
   this.emit("output", "Remote attached: " + remote.fullName() + "\n");
-  if (this.stickyRemoteFullName !== null &&
-      (!this.activeRemote ||
-       this.activeRemote.fullName() != this.stickyRemoteFullName) &&
-      remote.fullName() == this.stickyRemoteFullName)
-    this.selectRemote(remote.index(), true, true);
+
+  this.config.get(
+    "stickyRemote",
+    function (stickyRemote) {
+      if (stickyRemote !== null &&
+          (!self.activeRemote || self.activeRemote.fullName() != stickyRemote) &&
+          remote.fullName() == stickyRemote)
+        self.selectRemote(remote.index(), true, true);
+    });
 };
 
 Executive.prototype.handleDisconnectRemote = function handleDisconnectRemote (remote) {
@@ -305,13 +328,24 @@ Executive.prototype.selectRemote = function selectRemote (index, sticky, auto) {
       }
       this.activeRemote = remote;
       if (!auto)
-        this.stickyRemoteFullName = sticky ? remote.fullName() : null;
+        this.config.set("stickyRemote", sticky ? remote.fullName() : null);
       this.emit("output", "Remote selected" + (auto ? " (auto)" : sticky ? " (sticky)" : "") +
                 ": " + remote.fullName() + "\n");
       return;
     }
   }
   this.emit("output", "WARNING: bad remote index\n");
+};
+
+Executive.prototype.setTargetUrl = function setTargetUrl (targetUrl) {
+  var parsedUrl = null;
+  try {
+    parsedUrl = url.parse(targetUrl);
+  } catch (e) {}
+  if (parsedUrl && parsedUrl.hostname)
+    this.config.set("targetUrl", targetUrl);
+  else
+    this.emit("output", "WARNING: the URL must contain host and port\n");
 };
 
 exports.Handler = Handler;

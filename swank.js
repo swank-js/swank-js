@@ -3,8 +3,14 @@ var net = require("net"), http = require('http'), io = require('socket.io'), uti
     url = require('url'), fs = require('fs');
 var swh = require("./swank-handler");
 var swp = require("./swank-protocol");
+var config = require("./config");
 
-var executive = new swh.Executive();
+var DEFAULT_TARGET_HOST = "localhost";
+var DEFAULT_TARGET_PORT = 8080;
+var CONFIG_FILE_NAME = "~/.swankjsrc";
+
+var cfg = new config.Config(CONFIG_FILE_NAME);
+var executive = new swh.Executive({ config: cfg });
 
 var swankServer = net.createServer(
   function (stream) {
@@ -80,7 +86,9 @@ BrowserRemote.prototype.evaluate = function evaluate (id, str) {
 
 // proxy code from http://www.catonmat.net/http-proxy-in-nodejs
 
-function HttpListener (server) {}
+function HttpListener (cfg) {
+  this.config = cfg;
+}
 
 HttpListener.prototype.clientVersion = "0.1";
 
@@ -110,23 +118,27 @@ HttpListener.prototype.findClosingTag = function findClosingTag (buffer, name) {
   // it will not work for tags that have such letters
   var chars = [];
   var endChar = ">".charCodeAt(0);
-  name = "</" + name;
+  name = "</" + name.toLowerCase();
   for (var i = 0; i < name.length; ++i)
     chars.push(name.charCodeAt(i));
+  var A_CODE = "A".charCodeAt(0), Z_CODE = "Z".charCodeAt(0), CODE_INC = "a".charCodeAt(0) - A_CODE;
+  function codeToLower (x) {
+    return x >= A_CODE && x <= Z_CODE ? x + CODE_INC : x;
+  }
   for (i = 0; i < buffer.length - chars.length - 1;) {
     var found = true;
-    if (buffer[i++] != chars[0])
+    if (buffer[i++] != chars[0]) // note: no lowercasing for matching against '<'
       continue;
 
     for (var j = 1; j < chars.length; ++j, ++i) {
-      if (buffer[i] != chars[j]) {
+      if (codeToLower(buffer[i]) != chars[j]) {
         found = false;
         break;
       }
     }
     if (found) {
       for (var k = i; k < buffer.length; ++k) {
-        if (buffer[k] == endChar)
+        if (buffer[k] == endChar)// note: no lowercasing for matching against '>'
           return i - chars.length;
       }
     }
@@ -153,11 +165,35 @@ HttpListener.prototype.injectScripts = function injectScripts (buffer, url) {
 
 HttpListener.prototype.proxyRequest = function proxyRequest (request, response) {
   var self = this;
+  this.config.get(
+    "targetUrl",
+    function (targetUrl) {
+      self.doProxyRequest(targetUrl, request, response);
+    });
+};
+
+HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, request, response) {
+  var self = this;
+  var headersSent = false;
   var done = false;
+
+  var hostname = DEFAULT_TARGET_HOST;
+  var port = DEFAULT_TARGET_PORT;
+  var parsedUrl = null;
+  try {
+    parsedUrl = url.parse(targetUrl);
+  } catch (e) {}
+  if (parsedUrl && parsedUrl.hostname) {
+    hostname = parsedUrl.hostname;
+    port = parsedUrl.port ? parsedUrl.port - 0 : 80;
+  }
+
+  request.headers["host"] = hostname + (port == 80 ? "" : ":" + port);
+  delete request.headers["accept-encoding"]; // we don't want gzipped pages, do we?
 
   // note on http client error handling:
   // http://rentzsch.tumblr.com/post/664884799/node-js-handling-refused-http-client-connections
-  var proxy = http.createClient(8080, "localhost"); // TBD: use configurable host //request.headers['host']);
+  var proxy = http.createClient(port, hostname);
   proxy.addListener(
     'error', function handleError (e) {
       console.log("proxy error: %s", e);
@@ -176,7 +212,6 @@ HttpListener.prototype.proxyRequest = function proxyRequest (request, response) 
 
   proxyRequest.addListener(
     'response', function (proxyResponse) {
-      var headersSent = false;
       var contentType = proxyResponse.headers["content-type"];
       var statusCode = proxyResponse.statusCode;
       var headers = {};
@@ -298,7 +333,7 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
   }
 };
 
-var httpListener = new HttpListener();
+var httpListener = new HttpListener(cfg);
 var httpServer = http.createServer(httpListener.serveClient.bind(httpListener));
 
 httpServer.listen(8009);
@@ -339,9 +374,8 @@ socket.on(
 // TBD: only modify responses with code==200
 
 // most important things for initial release:
-// - configurable+selectable proxy target with Host: header substitution
-// - proper iframe parent handling when setting up SwankJS (test)
 // - proper remote naming
 // - browser-based prompt
+// - proper iframe parent handling when setting up SwankJS (test)
 // - README
 // - license

@@ -24,18 +24,27 @@
   (interactive (list (slime-js-read-remote-index)))
   (slime-eval-async `(js:select-remote ,n nil)))
 
+(defslime-repl-shortcut slime-repl-js-select-remote ("select-remote")
+  (:handler 'slime-js-select-remote)
+  (:one-liner "Select JS remote."))
+
 (defun slime-js-sticky-select-remote (n)
   "Select JS remote by number in sticky mode"
   (interactive (list (slime-js-read-remote-index)))
   (slime-eval-async `(js:select-remote ,n t)))
 
-(defslime-repl-shortcut slime-repl-js-select-remote ("select-remote")
-  (:handler 'slime-js-select-remote)
-  (:one-liner "Select JS remote."))
-
 (defslime-repl-shortcut slime-repl-js-sticky-select-remote ("sticky-select-remote")
   (:handler 'slime-js-sticky-select-remote)
   (:one-liner "Select JS remote in sticky mode."))
+
+(defun slime-js-set-target-url (url)
+  "Set target URL for the proxy"
+  (interactive "sTarget URL: ")
+  (slime-eval-async `(js:set-target-url ,url)))
+
+(defslime-repl-shortcut slime-repl-js-set-target-url ("target-url")
+  (:handler 'slime-js-set-target-url)
+  (:one-liner "Select target URL for the swank-js proxy"))
 
 ;; FIXME: should add an rpc command for browser-only eval
 

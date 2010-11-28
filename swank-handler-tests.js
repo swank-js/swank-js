@@ -1,11 +1,13 @@
 // -*- mode: js2; js-run: t -*-
 var swh = require("./swank-handler");
 var readFromString = require("./lisp").readFromString;
+var config = require("./config");
 var util = require("util");
 var assert = require("assert");
 
+var cfg = new config.FakeConfig();
 var expected = [];
-var executive = new swh.Executive({ pid: 4242 });
+var executive = new swh.Executive({ config: cfg, pid: 4242 });
 var handler = new swh.Handler(executive);
 
 handler.on(
@@ -164,6 +166,8 @@ request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 23)',
         '(:write-string "WARNING: remote already selected: (direct) node.js\n")',
         '(:return (:ok nil) 23)');
 
+assert.equal(null, cfg.getNow("stickyRemote"));
+
 // test sticky remote selection
 expect('(:write-string "Remote attached: (test) test/localhost:8001\n")');
 var r3 = new FakeRemote("test/localhost:8001");
@@ -177,6 +181,8 @@ request('(:emacs-rex (js:select-remote 4 t) "JS" :repl-thread 25)',
         '(:write-string "Remote selected (sticky): (test) test/localhost:8001\n")',
         '(:return (:ok nil) 25)');
 
+assert.equal("(test) test/localhost:8001", cfg.getNow("stickyRemote"));
+
 expect('(:write-string "Remote detached: (test) test/localhost:8001\n")',
        '(:write-string "Remote selected (auto): (direct) node.js\n")');
 r3.disconnect();
@@ -188,6 +194,8 @@ var r5 = new FakeRemote("test/localhost:8001");
 executive.attachRemote(r5);
 verifyExpectations();
 
+assert.equal("(test) test/localhost:8001", cfg.getNow("stickyRemote"));
+
 request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 26)',
         '(:write-string "Remote selected: (direct) node.js\n")',
         '(:return (:ok nil) 26)');
@@ -195,6 +203,8 @@ request('(:emacs-rex (js:select-remote 1 nil) "JS" :repl-thread 26)',
 request('(:emacs-rex (js:select-remote 5 nil) "JS" :repl-thread 27)',
         '(:write-string "Remote selected: (test) test/localhost:8001\n")',
         '(:return (:ok nil) 27)');
+
+assert.equal(null, cfg.getNow("stickyRemote"));
 
 expect('(:write-string "Remote detached: (test) test/localhost:8001\n")',
        '(:write-string "Remote selected (auto): (direct) node.js\n")');
@@ -205,6 +215,19 @@ expect('(:write-string "Remote attached: (test) test/localhost:8001\n")');
 var r6 = new FakeRemote("test/localhost:8001");
 executive.attachRemote(r6);
 verifyExpectations();
+
+assert.equal(null, cfg.getNow("stickyRemote"));
+
+request('(:emacs-rex (js:set-target-url "http://localhost:1234/") "JS" :repl-thread 28)',
+        '(:return (:ok nil) 28)');
+
+assert.equal("http://localhost:1234/", cfg.getNow("targetUrl"));
+
+request('(:emacs-rex (js:set-target-url "zzz") "JS" :repl-thread 29)',
+        '(:write-string "WARNING: the URL must contain host and port\n")',
+        '(:return (:ok nil) 29)');
+
+assert.equal("http://localhost:1234/", cfg.getNow("targetUrl"));
 
 // TBD: use ## instead of numbers in the tests above (request() should take care of it)
 // TBD: test output from an inactive remote
