@@ -17,6 +17,10 @@ SwankJS.debug = function debug () {
 };
 
 SwankJS.setup = function setup () {
+  try {
+    if (parent.window && parent.window.document !== document && parent.window.SwankJS)
+      return;
+  } catch (e) {}
   var self = this;
   // TBD: swank-js should proxy all requests to autoadd its scripts
   // (this way, the dynamic script loading stuff isn't necessary)

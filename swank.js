@@ -396,10 +396,9 @@ socket.on(
 // is available
 // TBD: handle/add X-Forwarded-For headers
 // TBD: fix all assert calls: we need (actual, expected) not (expected, actual)
+// TBD: invoke SwankJS.setup() only when DOM is ready (at least in IE)
 
 // most important things for initial release:
-// - browser-based prompt -- use (:new-package "COMMON-LISP-USER" "CL-USER") after the remote changes
-// - proper iframe parent handling when setting up SwankJS (test)
 // - add a command for slime :version sync (store version in the config, default to something meaningful)
 // - README
 // - license
