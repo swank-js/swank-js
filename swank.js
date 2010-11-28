@@ -102,6 +102,7 @@ HttpListener.prototype.clientVersion = "0.1";
 HttpListener.prototype.cachedFiles = {};
 
 HttpListener.prototype.clientFiles = {
+  'json2.js': 'json2.js',
   'stacktrace.js': 'stacktrace.js',
   'swank-js.js': 'swank-js.js',
   'load.js': 'load.js',
@@ -115,6 +116,7 @@ HttpListener.prototype.types = {
 
 HttpListener.prototype.scriptBlock =
   new Buffer(
+    '<script type="text/javascript" src="/swank-js/json2.js"></script>' +
     '<script type="text/javascript" src="/socket.io/socket.io.js"></script>' +
     '<script type="text/javascript" src="/swank-js/stacktrace.js"></script>' +
     '<script type="text/javascript" src="/swank-js/swank-js.js"></script>');
@@ -221,6 +223,7 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
     'response', function (proxyResponse) {
       var contentType = proxyResponse.headers["content-type"];
       var statusCode = proxyResponse.statusCode;
+      console.log("==> status %s", statusCode);
       var headers = {};
       for (k in proxyResponse.headers) {
         if (proxyResponse.headers.hasOwnProperty(k))
@@ -382,6 +385,7 @@ socket.on(
 // TBD: sudden disconnections (flashsocket), sometimes after lots of output (?) --
 // Error: You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.
 // TBD: autoreconnect + connection error handling
+// ALSO: are htmlfile, jsonp-polling modes etc supposed to disconnect after each message?
 // TBD: add SwankJS scripts to all passing html pages (into <head> or <body>)
 // TBD: SwankJS.setup() should do nothing if parent window has SwankJS
 // TBD: it should be possible to serve local files instead of proxying
@@ -394,7 +398,6 @@ socket.on(
 // TBD: fix all assert calls: we need (actual, expected) not (expected, actual)
 
 // most important things for initial release:
-// - proper remote naming
 // - browser-based prompt -- use (:new-package "COMMON-LISP-USER" "CL-USER") after the remote changes
 // - proper iframe parent handling when setting up SwankJS (test)
 // - add a command for slime :version sync (store version in the config, default to something meaningful)
