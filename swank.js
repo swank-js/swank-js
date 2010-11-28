@@ -1,4 +1,31 @@
 // -*- mode: js2 -*-
+//
+// Copyright (c) 2010 Ivan Shvedunov. All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+// * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following
+// disclaimer in the documentation and/or other materials
+// provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR 'AS IS' AND ANY EXPRESSED
+// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+// GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 var net = require("net"), http = require('http'), io = require('socket.io'), util = require("util"),
     url = require('url'), fs = require('fs');
 var swh = require("./swank-handler");
@@ -381,7 +408,6 @@ socket.on(
 // it should be also possible to 'soft-trace' functions so that they extend Exception objects with caller info as it passes through them
 // TBD: unix domain sockets, normal slime startup
 // TBD: http request logging (for specific remote)
-// TBD: pointing the proxy to different server
 // TBD: sudden disconnections (flashsocket), sometimes after lots of output (?) --
 // Error: You are trying to call recursively into the Flash Player which is not allowed. In most cases the JavaScript setTimeout function, can be used as a workaround.
 // TBD: autoreconnect + connection error handling
@@ -396,7 +422,3 @@ socket.on(
 // TBD: handle/add X-Forwarded-For headers
 // TBD: fix all assert calls: we need (actual, expected) not (expected, actual)
 // TBD: invoke SwankJS.setup() only when DOM is ready (at least in IE)
-
-// most important things for initial release:
-// - README
-// - license
