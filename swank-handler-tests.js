@@ -1,4 +1,4 @@
-// -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t -*-
+// -*- mode: js2; js-run: t -*-
 var swh = require("./swank-handler");
 var readFromString = require("./lisp").readFromString;
 var util = require("util");

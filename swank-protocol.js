@@ -1,4 +1,4 @@
-// -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t; js-run: "swank-protocol-tests.js" -*-
+// -*- mode: js2; js-run: "swank-protocol-tests.js" -*-
 var readFromString = require("./lisp").readFromString;
 
 const HEADER_LEN = 6;

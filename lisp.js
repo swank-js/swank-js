@@ -1,4 +1,4 @@
-// -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t; js-run: "lisp-tests.js" -*-
+// -*- mode: js2; js-run: "lisp-tests.js" -*-
 var util = require("util");
 var assert = process.assert;
 

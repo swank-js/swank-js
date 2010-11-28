@@ -1,4 +1,4 @@
-// -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t -*-
+// -*- mode: js2; js-run: t -*-
 var swp = require("./swank-protocol");
 var lisp = require("./lisp");
 var Buffer = require('buffer').Buffer;

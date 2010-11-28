@@ -1,4 +1,4 @@
-// -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t; js-run: "swank-handler-tests.js" -*-
+// -*- mode: js2; js-run: "swank-handler-tests.js" -*-
 var EventEmitter = require("events").EventEmitter;
 var Script = process.binding('evals').Script;
 var evalcx = Script.runInContext;

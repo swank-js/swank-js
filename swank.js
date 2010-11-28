@@ -1,4 +1,4 @@
-// -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t -*-
+// -*- mode: js2 -*-
 var net = require("net"), http = require('http'), io = require('socket.io'), util = require("util"),
     url = require('url'), fs = require('fs');
 var swh = require("./swank-handler");
@@ -342,3 +342,6 @@ socket.on(
 // - configurable+selectable proxy target with Host: header substitution
 // - proper iframe parent handling when setting up SwankJS (test)
 // - proper remote naming
+// - browser-based prompt
+// - README
+// - license

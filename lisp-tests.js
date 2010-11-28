@@ -1,4 +1,4 @@
-// -*- mode: js2; moz-minor-mode: nil; jsc-minor-mode: t -*-
+// -*- mode: js2; js-run: t -*-
 var lisp = require("./lisp");
 var assert = require("assert");
 var S = lisp.S, cons = lisp.cons, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
