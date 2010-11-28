@@ -80,6 +80,15 @@
   (:handler 'slime-js-set-target-url)
   (:one-liner "Select target URL for the swank-js proxy"))
 
+(defun slime-js-set-slime-version (url)
+  "Set SLIME version for swank-js"
+  (interactive "sVersion: ")
+  (slime-eval-async `(js:set-slime-version ,url)))
+
+(defslime-repl-shortcut slime-repl-js-set-slime-version ("js-slime-version")
+  (:handler 'slime-js-set-slime-version)
+  (:one-liner "Set SLIME version for swank-js"))
+
 ;; FIXME: should add an rpc command for browser-only eval
 
 (defun slime-js-eval (str &optional cont)

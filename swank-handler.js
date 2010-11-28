@@ -9,6 +9,8 @@ var lisp = require("./lisp");
 var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
     repr = lisp.repr, fromLisp = lisp.fromLisp, toLisp = lisp.toLisp;
 
+var DEFAULT_SLIME_VERSION = "2010-11-13";
+
 function Handler (executive) {
   this.executive = executive;
   var self = this;
@@ -47,15 +49,22 @@ Handler.prototype.receive = function receive (message) {
 
   switch (d.form.name) {
   case "swank:connection-info":
-    r.result = toLisp(this.executive.connectionInfo(),
-                      { "pid": "N:pid",
-                        "encoding": { name: "encoding", spec: { "coding-system": "s:codingSystem",
-                                                                "external-format": "s:externalFormat" } },
-                        "package": { name: "packageSpec", spec: { name: "s", prompt: "s" } },
-                        "lisp-implementation": {
-                          name: "implementation",
-                          spec: { type: "s", name: "s", version: "s" } } });
-    break;
+    this.executive.connectionInfo(
+      function (info) {
+        console.log("info = %j", info);
+        r.result = toLisp(
+          info,
+          { "pid": "N:pid",
+            "encoding": { name: "encoding", spec: { "coding-system": "s:codingSystem",
+                                                    "external-format": "s:externalFormat" } },
+            "package": { name: "packageSpec", spec: { name: "s", prompt: "s" } },
+            "lisp-implementation": {
+              name: "implementation",
+              spec: { type: "s", name: "s", version: "s" } },
+            "version": "s:version" });
+        cont();
+      });
+    return;
   case "swank:create-repl":
     r.result = toLisp(this.executive.createRepl(), ["s:packageName", "s:prompt"]);
     break;
@@ -91,6 +100,7 @@ Handler.prototype.receive = function receive (message) {
     this.executive.selectRemote(remoteIndex, sticky);
     break;
   case "js:set-target-url":
+  case "js:set-slime-version":
     if (d.form.args.length != 1) {
       console.log("bad args len for JS:SET-TARGET-URL -- %s", d.form.args.length);
       return; // FIXME
@@ -104,7 +114,7 @@ Handler.prototype.receive = function receive (message) {
       }
       throw e;
     }
-    this.executive.setTargetUrl(expr);
+    this.executive[d.form.name == "js:set-target-url" ? "setTargetUrl" : "setSlimeVersion"](expr);
     break;
   case "swank:interactive-eval":
   case "swank:listener-eval":
@@ -305,12 +315,18 @@ Executive.prototype.handleDisconnectRemote = function handleDisconnectRemote (re
     this.selectRemote(this.remotes[0].index(), false, true);
 };
 
-Executive.prototype.connectionInfo = function connectionInfo () {
+Executive.prototype.connectionInfo = function connectionInfo (cont) {
+  var self = this;
   var prompt = this.activeRemote.prompt();
-  return { pid: this.pid === null ? process.pid : this.pid,
-           encoding: { codingSystem: "utf-8", externalFormat: "UTF-8" },
-           packageSpec: { name: prompt, prompt: prompt },
-           implementation: { type: "JS", name: "JS", version: "1.5" } };
+  this.config.get(
+    "slimeVersion",
+    function (slimeVersion) {
+      cont({ pid: self.pid === null ? process.pid : self.pid,
+             encoding: { codingSystem: "utf-8", externalFormat: "UTF-8" },
+             packageSpec: { name: prompt, prompt: prompt },
+             implementation: { type: "JS", name: "JS", version: "1.5" },
+             version: slimeVersion || DEFAULT_SLIME_VERSION });
+    });
 };
 
 Executive.prototype.createRepl = function createRepl () {
@@ -362,6 +378,10 @@ Executive.prototype.setTargetUrl = function setTargetUrl (targetUrl) {
     this.config.set("targetUrl", targetUrl);
   else
     this.emit("output", "WARNING: the URL must contain host and port\n");
+};
+
+Executive.prototype.setSlimeVersion = function setSlimeVersion (slimeVersion) {
+  this.config.set("slimeVersion", slimeVersion);
 };
 
 exports.Handler = Handler;

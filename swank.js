@@ -387,7 +387,6 @@ socket.on(
 // TBD: autoreconnect + connection error handling
 // ALSO: are htmlfile, jsonp-polling modes etc supposed to disconnect after each message?
 // TBD: add SwankJS scripts to all passing html pages (into <head> or <body>)
-// TBD: SwankJS.setup() should do nothing if parent window has SwankJS
 // TBD: it should be possible to serve local files instead of proxying
 // (maybe using https://github.com/felixge/node-paperboy )
 // TBD: handle edge case: new sticky remote connects, old sticky remote disconnects
@@ -399,6 +398,5 @@ socket.on(
 // TBD: invoke SwankJS.setup() only when DOM is ready (at least in IE)
 
 // most important things for initial release:
-// - add a command for slime :version sync (store version in the config, default to something meaningful)
 // - README
 // - license
