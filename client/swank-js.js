@@ -47,9 +47,11 @@ SwankJS.setup = function setup () {
       try {
         var r = window.eval(m.code);
       } catch (e) {
-        self.debug("error = %s", String(e));
+        var message = String(e);
+        try { message = e.message; } catch(e) {}
+        self.debug("error = %s", message);
         self.socket.send({ op: "result", id: m.id,
-                      error: String(e) + "\n" + swank_printStackTrace({ e: e }).join("\n") });
+                      error: message + "\n" + swank_printStackTrace({ e: e }).join("\n") });
         return;
       }
       self.debug("result = %s", String(r));
