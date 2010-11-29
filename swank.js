@@ -422,3 +422,4 @@ socket.on(
 // TBD: handle/add X-Forwarded-For headers
 // TBD: fix all assert calls: we need (actual, expected) not (expected, actual)
 // TBD: invoke SwankJS.setup() only when DOM is ready (at least in IE)
+// TBD: timeouts for browser requests
