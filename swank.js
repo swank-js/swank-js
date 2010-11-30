@@ -65,7 +65,7 @@ var swankServer = net.createServer(
         handler.removeAllListeners("response");
       });
   });
-swankServer.listen(4005, "localhost");
+swankServer.listen(process.argv[2] || 4005, process.argv[3] || "localhost");
 
 function BrowserRemote (clientInfo, client) {
   var userAgent = ua.recognize(clientInfo.userAgent);
