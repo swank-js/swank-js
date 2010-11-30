@@ -55,7 +55,10 @@
          (when (buffer-live-p buffer)
            (with-current-buffer buffer
              (setq slime-buffer-package package)
-             (slime-js-repl-update-package)))
+             (slime-js-repl-update-package)
+             (save-excursion
+               (goto-char (marker-position slime-repl-prompt-start-mark))
+               (slime-mark-output-start))))
          t))
       (t nil))))
 

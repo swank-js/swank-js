@@ -124,14 +124,13 @@ see "Remote:" prompt. Press TAB to see completions. Select your
 browser in the list by typing its name or clicking on the
 completion. The following message will appear:
 
-    Remote selected: (browser) Firefox3.6:127.0.0.1
     NODE>
+    Remote selected: (browser) Firefox3.6:127.0.0.1
     FIREFOX-3.6>
 
 After that, you can interactively evaluate expressions in your
 browser. To go back to Node.JS repl, switch back to node.js/direct
-remote. (Note that output always goes before consecutive REPL prompts,
-I'll try to fix it in following versions).
+remote.
 
     FIREFOX-3.6> document.body.nodeName
     BODY
@@ -147,11 +146,11 @@ F5 after using *,sticky-select-remote*, you will see that browser
 briefly disconnects but then connects again:
 
     Remote detached: (browser) Firefox3.6:127.0.0.1
+    FIREFOX-3.6>
     Remote selected (auto): (direct) node.js
     Remote attached: (browser) Firefox3.6:127.0.0.1
-    Remote selected (auto): (browser) Firefox3.6:127.0.0.1
-    FIREFOX-3.6>
     NODE>
+    Remote selected (auto): (browser) Firefox3.6:127.0.0.1
     FIREFOX-3.6>
 
 The sticky remote selection is saved in the config file, ~/.swankjsrc,
