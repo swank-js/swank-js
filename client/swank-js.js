@@ -25,7 +25,21 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-var SwankJS = { socket: null, connected: false, bufferedOutput: [] };
+var SwankJS = {
+  socket: null,
+  connected: false,
+  bufferedOutput: [],
+  pingId: 1,
+  lastMessageTime: 0,
+  pingIntervalId: null,
+  reconnectIntervalId: null,
+  pingEnabled: true,
+  evaluating: false
+};
+
+SwankJS.CONNECTION_TIMEOUT = 3000;
+SwankJS.RECONNECT_ATTEMPT_INTERVAL = 2000;
+SwankJS.PING_INTERVAL = 900;
 
 // TBD: check message contents
 // TBD: exception handling
@@ -43,6 +57,17 @@ SwankJS.debug = function debug () {
   debug.apply(console, args);
 };
 
+SwankJS.setPingEnabled = function setPingEnabled (enable) {
+  enable = !!enable;
+  if (this.pingEnabled == enable)
+    return;
+  this.pingEnabled = enable;
+  if (this.pingEnabled)
+    this.startPing();
+  else
+    this.stopPing();
+};
+
 SwankJS.setup = function setup () {
   try {
     if (parent.window && parent.window.document !== document && parent.window.SwankJS)
@@ -54,10 +79,15 @@ SwankJS.setup = function setup () {
   // and to make flashsocket swf load from the same url as the
   // web app itself.
   // Don't forget about 'Host: ' header though!
+  this.lastMessageTime = new Date().getTime();
   this.socket = new io.Socket();
   this.socket.on(
     "connect",
     function() {
+      if (self.reconnectIntervalId !== null) {
+        clearInterval(self.reconnectIntervalId);
+        self.reconnectIntervalId = null;
+      }
       self.connected = true;
       self.debug("connected");
       self.socket.send({ op: "handshake", userAgent: navigator.userAgent });
@@ -66,11 +96,18 @@ SwankJS.setup = function setup () {
           self.output(self.bufferedOutput[i]);
         self.bufferedOutput = [];
       }
+      self.lastMessageTime = new Date().getTime();
+      self.startPing();
     });
   this.socket.on(
     "message", function swankjs_evaluate (m) {
+      self.lastMessageTime = new Date().getTime();
+      if (m.hasOwnProperty("pong"))
+        return;
+
       self.debug("eval: %o", m);
-      // var m = JSON.parse(message);
+      // JS reentrancy is possible. I've observed it when using XSLTProcessor
+      self.evaluating = true;
       try {
         var r = window.eval(m.code);
       } catch (e) {
@@ -84,13 +121,63 @@ SwankJS.setup = function setup () {
         self.socket.send({ op: "result", id: m.id,
                            error: message + "\n" + swank_printStackTrace({ e: e }).join("\n") });
         return;
+      } finally {
+        // don't let the connection break due to missed pings when evaluation takes too long
+        self.lastMessageTime = new Date().getTime();
+        self.evaluating = false;
       }
       self.debug("result = %s", String(r));
       self.socket.send({ op: "result", id: m.id, error: null, values: r === undefined ? [] : [String(r)] }); });
   this.socket.on(
     "disconnect", function() {
-      self.debug("connected");
+      self.debug("disconnected");
+      self.connected = false;
     });
+  this.socket.connect();
+};
+
+SwankJS.startPing = function startPing () {
+  var self = this;
+  if (this.pingIntervalId === null && this.pingEnabled && this.connected)
+    this.pingIntervalId = setInterval(
+      function () {
+        self.ping();
+      }, this.PING_INTERVAL);
+};
+
+SwankJS.stopPing = function stopPing () {
+  if (this.pingIntervalId !== null) {
+    clearInterval(this.pingIntervalId);
+    this.pingIntervalId = null;
+  }
+};
+
+SwankJS.ping = function ping () {
+  if (!this.pingEnabled) {
+    this.stopPing();
+    return;
+  }
+
+  if (this.evaluating)
+    return;
+
+  var self = this;
+  if (new Date().getTime() > this.lastMessageTime + this.CONNECTION_TIMEOUT) {
+    this.debug("ping timeout");
+    if (this.pingIntervalId !== null) {
+      this.stopPing();
+      this.reconnectIntervalId = setInterval(
+        function () {
+          self.reconnect();
+        }, this.RECONNECT_ATTEMPT_INTERVAL);
+    }
+  } else if (this.connected)
+    this.socket.send({ op: "ping", id: this.pingId++ });
+};
+
+SwankJS.reconnect = function reconnect () {
+  this.debug("reconnecting");
+  this.socket.disconnect();
   this.socket.connect();
 };
 

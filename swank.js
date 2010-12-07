@@ -76,7 +76,8 @@ function BrowserRemote (clientInfo, client) {
     "message", function(m) {
       // TBD: handle parse errors
       // TBD: validate incoming message (id, etc.)
-      console.log("message from browser: %s", JSON.stringify(m));
+      if (m.op !== "ping") // don't show pings
+        console.log("message from browser: %s", JSON.stringify(m));
       switch(m.op) {
       case "output":
         this.output(m.str);
@@ -88,6 +89,9 @@ function BrowserRemote (clientInfo, client) {
           break;
         }
         this.sendResult(m.id, m.values);
+        break;
+      case "ping":
+        this.client.send({ pong: m.id });
         break;
       default:
         console.log("WARNING: cannot interpret the client message");
@@ -382,13 +386,13 @@ socket.on(
     console.log("client connected");
     function handleHandshake (message) {
       client.removeListener("message", handleHandshake);
-      if (!message.hasOwnProperty("op") || !message.op == "handshake")
-        console.warn("WARNING: bad handshake message: %j", message);
+      if (!message.hasOwnProperty("op") || message.op != "handshake")
+        console.warn("WARNING: skipping pre-handshake message: %j", message);
       else {
         var address = null;
         if (client.connection && client.connection.remoteAddress)
-          address = client.connection.remoteAddress;
-        var remote = new BrowserRemote({ address: address, userAgent: message.userAgent }, client);
+          address = client.connection.remoteAddress || "noaddress";
+        var remote = new BrowserRemote({ address: address, userAgent: message.userAgent || "" }, client);
         executive.attachRemote(remote);
         console.log("added remote: %s", remote.fullName());
       }
