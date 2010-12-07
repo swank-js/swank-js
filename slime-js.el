@@ -29,6 +29,7 @@
   "Emacs-side support for Swank-JS."
   (:authors "Ivan Shvedunov")
   (:license "X11-style")
+  (:slime-dependencies slime-repl)
   (:on-load
    (add-hook 'slime-event-hooks 'slime-js-event-hook-function))
   (:on-unload
