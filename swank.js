@@ -71,6 +71,7 @@ function BrowserRemote (clientInfo, client) {
   var userAgent = ua.recognize(clientInfo.userAgent);
   this.name = userAgent.replace(/ /g, "") + (clientInfo.address ? (":" + clientInfo.address) : "");
   this._prompt = userAgent.toUpperCase().replace(/ /g, '-');
+  this.pendingRequests = {};
   this.client = client;
   this.client.on(
     "message", function(m) {
@@ -83,12 +84,17 @@ function BrowserRemote (clientInfo, client) {
         this.output(m.str);
         break;
       case "result":
+        if (!this.pendingRequests.hasOwnProperty(m.id)) {
+          console.log("WARNING: late result response from the browser");
+          break;
+        }
+        delete this.pendingRequests[m.id];
         if (m.error) {
           this.output(m.error + "\n");
           this.sendResult(m.id, []);
-          break;
-        }
-        this.sendResult(m.id, m.values);
+        } else
+          this.sendResult(m.id, m.values);
+        this.sweepRequests();
         break;
       case "ping":
         this.client.send({ pong: m.id });
@@ -106,6 +112,19 @@ function BrowserRemote (clientInfo, client) {
 
 util.inherits(BrowserRemote, swh.Remote);
 
+BrowserRemote.prototype.REQUEST_TIMEOUT = 3000;
+
+BrowserRemote.prototype.sweepRequests = function sweepRequests (all) {
+  Object.keys(this.pendingRequests).forEach(
+    function (id) {
+      if (all || this.pendingRequests[id] < new Date().getTime() - this.REQUEST_TIMEOUT) {
+        console.log("request %s didn't finish", id);
+        this.sendResult(id, []);
+        delete this.pendingRequests[id];
+      }
+    }, this);
+};
+
 BrowserRemote.prototype.prompt = function prompt () {
   return this._prompt;
 };
@@ -120,6 +139,12 @@ BrowserRemote.prototype.id = function id () {
 
 BrowserRemote.prototype.evaluate = function evaluate (id, str) {
   this.client.send({ id: id, code: str });
+  this.pendingRequests[id] = new Date().getTime();
+};
+
+BrowserRemote.prototype.disconnect = function disconnect () {
+  this.sweepRequests(true);
+  swh.Remote.prototype.disconnect.call(this);
 };
 
 // proxy code from http://www.catonmat.net/http-proxy-in-nodejs
