@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var util = require("util");
-var assert = process.assert;
+var assert = require("assert");
 
 var I = {};
 
@@ -309,7 +309,7 @@ function naturalValue (v) {
 };
 
 function plistValue (l, useNatural, map) {
-  assert(!map || !useNatural);
+  assert.ok(!map || !useNatural);
   var origList = l;
   var result = {};
   for (; l !== nil; l = cdr(cdr(l))) {
@@ -327,7 +327,7 @@ function plistValue (l, useNatural, map) {
         continue;
       var mapSpec = map[targetName];
       if (typeof(mapSpec) == "object") {
-        assert(mapSpec.spec);
+        assert.ok(mapSpec.spec);
         result[mapSpec.hasOwnProperty("name") ? mapSpec.name : targetName] =
           fromLisp(value, mapSpec.spec);
       } else {
@@ -353,11 +353,11 @@ function plainList (l, spec) {
     var type = arg[0];
     var name = arg[1];
     if (type == ">") {
-      assert(i < spec.length - 1);
+      assert.ok(i < spec.length - 1);
       type = spec[++i];
     }
     if (type == ">*") {
-      assert(i < spec.length - 1);
+      assert.ok(i < spec.length - 1);
       result[name] = fromLisp(l, spec[++i]);
       l = nil;
       break;
@@ -473,7 +473,7 @@ function mappedPlistValueToLisp (o, map) {
       continue;
     var mapSpec = map[k];
     if (typeof(mapSpec) == "object") {
-      assert(mapSpec.spec);
+      assert.ok(mapSpec.spec);
       items.push({ jsName: mapSpec.hasOwnProperty("name") ? mapSpec.name : k,
                    lispName: k, spec: mapSpec.spec });
     } else {
@@ -521,13 +521,13 @@ function plainListToLisp (o, spec) {
     var v = o[name];
 
     if (type == ">") {
-      assert(i < spec.length - 1);
+      assert.ok(i < spec.length - 1);
       type = spec[++i];
     }
 
     switch (type) {
     case ">*":
-      assert(i < spec.length - 1);
+      assert.ok(i < spec.length - 1);
       return append(reverse(r), toLisp(v, spec[++i]));
     case "R":
       return append(reverse(r), naturalValueToLisp(v));

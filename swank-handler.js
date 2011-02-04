@@ -31,7 +31,7 @@ var Script = process.binding('evals').Script;
 var evalcx = Script.runInContext;
 var util = require("util");
 var url = require("url");
-var assert = process.assert;
+var assert = require("assert");
 var lisp = require("./lisp");
 var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
     repr = lisp.repr, fromLisp = lisp.fromLisp, toLisp = lisp.toLisp;
@@ -275,7 +275,7 @@ DefaultRemote.prototype.evaluate = function evaluate (id, str) {
 // TBD: rename Executive to Dispatcher
 function Executive (options) {
   options = options || {};
-  assert(options.hasOwnProperty("config") && options.config);
+  assert.ok(options.hasOwnProperty("config") && options.config);
   this.config = options.config;
   this.pid = options.hasOwnProperty("pid") ? options.pid : null;
   this.remotes = [];
@@ -291,7 +291,7 @@ Executive.nextId = 1; // request id counter is global in order to avoid inter-co
 Executive.nextRemoteIndex = 1;
 
 Executive.prototype.attachRemote = function attachRemote (remote) {
-  assert(this.remotes.indexOf(remote) < 0);
+  assert.ok(this.remotes.indexOf(remote) < 0);
   remote.setIndex(Executive.nextRemoteIndex++);
 
   var self = this;
