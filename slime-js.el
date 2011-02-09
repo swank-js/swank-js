@@ -173,6 +173,7 @@
     (lexical-let ((start (slime-js-start-of-toplevel-form))
                   (end (slime-js-end-of-toplevel-form)))
       ;; FIXME: use slime-eval-region
+      (slime-flash-region start end)
       (slime-js-eval
        (buffer-substring-no-properties start end)
        #'(lambda (v)
