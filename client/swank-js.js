@@ -68,7 +68,7 @@ SwankJS.setPingEnabled = function setPingEnabled (enable) {
     this.stopPing();
 };
 
-SwankJS.setup = function setup () {
+SwankJS.setup = function setup (url, options) {
   try {
     if (parent.window && parent.window.document !== document && parent.window.SwankJS)
       return;
@@ -80,7 +80,7 @@ SwankJS.setup = function setup () {
   // web app itself.
   // Don't forget about 'Host: ' header though!
   this.lastMessageTime = new Date().getTime();
-  this.socket = new io.Socket();
+  this.socket = new io.Socket(url, options);
   this.socket.on(
     "connect",
     function() {
@@ -223,4 +223,3 @@ SwankJS.makeScriptElement = function makeScriptElement (src, content) {
 };
 */
 
-SwankJS.setup();
