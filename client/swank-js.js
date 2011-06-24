@@ -68,7 +68,7 @@ SwankJS.setPingEnabled = function setPingEnabled (enable) {
     this.stopPing();
 };
 
-SwankJS.setup = function setup (url, options) {
+SwankJS.setup = function setup (url) {
   try {
     if (parent.window && parent.window.document !== document && parent.window.SwankJS)
       return;
@@ -80,7 +80,7 @@ SwankJS.setup = function setup (url, options) {
   // web app itself.
   // Don't forget about 'Host: ' header though!
   this.lastMessageTime = new Date().getTime();
-  this.socket = new io.Socket(url, options);
+  this.socket = io.connect(url);
   this.socket.on(
     "connect",
     function() {
@@ -90,7 +90,7 @@ SwankJS.setup = function setup (url, options) {
       }
       self.connected = true;
       self.debug("connected");
-      self.socket.send({ op: "handshake", userAgent: navigator.userAgent });
+      self.socket.send(JSON.stringify({ "op": "handshake", "userAgent": navigator.userAgent }));
       if (self.bufferedOutput.length > 0) {
         for (var i = 0; i < self.bufferedOutput.length; ++i)
           self.output(self.bufferedOutput[i]);
@@ -101,6 +101,7 @@ SwankJS.setup = function setup (url, options) {
     });
   this.socket.on(
     "message", function swankjs_evaluate (m) {
+      m = JSON.parse(m);
       self.lastMessageTime = new Date().getTime();
       if (m.hasOwnProperty("pong"))
         return;
@@ -118,8 +119,14 @@ SwankJS.setup = function setup (url, options) {
           } catch(e1) {}
         }
         self.debug("error = %s", message);
-        self.socket.send({ op: "result", id: m.id,
-                           error: message + "\n" + swank_printStackTrace({ e: e }).join("\n") });
+        self.socket.send(
+          JSON.stringify(
+            { "op": "result",
+              "id": m.id,
+              "error": message + "\n" + swank_printStackTrace({ e: e }).join("\n")
+            }
+          )
+        );
         return;
       } finally {
         // don't let the connection break due to missed pings when evaluation takes too long
@@ -127,13 +134,21 @@ SwankJS.setup = function setup (url, options) {
         self.evaluating = false;
       }
       self.debug("result = %s", String(r));
-      self.socket.send({ op: "result", id: m.id, error: null, values: r === undefined ? [] : [String(r)] }); });
+      self.socket.send(
+        JSON.stringify(
+          { "op": "result",
+            "id": m.id,
+            "error": null,
+            "values": [String(r)]
+          }
+        )
+      );
+    });
   this.socket.on(
     "disconnect", function() {
       self.debug("disconnected");
       self.connected = false;
     });
-  this.socket.connect();
 };
 
 SwankJS.startPing = function startPing () {
@@ -171,8 +186,11 @@ SwankJS.ping = function ping () {
           self.reconnect();
         }, this.RECONNECT_ATTEMPT_INTERVAL);
     }
-  } else if (this.connected)
-    this.socket.send({ op: "ping", id: this.pingId++ });
+  } else if (this.connected) {
+    this.socket.send(
+      JSON.stringify({ "op": "ping", "id": this.pingId++ })
+    );
+  }
 };
 
 SwankJS.reconnect = function reconnect () {
@@ -185,7 +203,7 @@ SwankJS.reconnect = function reconnect () {
 
 SwankJS.output = function output (str) {
   if (this.socket && this.connected)
-    this.socket.send({ op: "output", str: str });
+    this.socket.send(JSON.stringify({ "op": "output", "str": str }));
   else
     this.bufferedOutput.push(str);
 };

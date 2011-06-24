@@ -77,6 +77,7 @@ function BrowserRemote (clientInfo, client) {
     "message", function(m) {
       // TBD: handle parse errors
       // TBD: validate incoming message (id, etc.)
+      m = JSON.parse(m);
       if (m.op !== "ping") // don't show pings
         console.log("message from browser: %s", JSON.stringify(m));
       switch(m.op) {
@@ -97,7 +98,7 @@ function BrowserRemote (clientInfo, client) {
         this.sweepRequests();
         break;
       case "ping":
-        this.client.send({ pong: m.id });
+        this.client.send(JSON.stringify({ "pong": m.id }));
         break;
       default:
         console.log("WARNING: cannot interpret the client message");
@@ -138,7 +139,7 @@ BrowserRemote.prototype.id = function id () {
 };
 
 BrowserRemote.prototype.evaluate = function evaluate (id, str) {
-  this.client.send({ id: id, code: str });
+  this.client.send(JSON.stringify({ "id": id, "code": str }));
   this.pendingRequests[id] = new Date().getTime();
 };
 
@@ -403,13 +404,14 @@ var httpListener = new HttpListener(cfg);
 var httpServer = http.createServer(httpListener.serveClient.bind(httpListener));
 
 httpServer.listen(8009);
+io = io.listen(httpServer);
 
-var socket = io.listen(httpServer);
-socket.on(
+io.sockets.on(
   "connection", function (client) {
     // new client is here!
     console.log("client connected");
     function handleHandshake (message) {
+      message = JSON.parse(message);
       client.removeListener("message", handleHandshake);
       if (!message.hasOwnProperty("op") || message.op != "handshake")
         console.warn("WARNING: skipping pre-handshake message: %j", message);
