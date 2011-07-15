@@ -27,7 +27,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var EventEmitter = require("events").EventEmitter;
-var Script = process.binding('evals').Script;
+var Script = require('vm').Script;
 var evalcx = Script.runInContext;
 var util = require("util");
 var url = require("url");
