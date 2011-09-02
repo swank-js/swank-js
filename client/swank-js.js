@@ -212,17 +212,25 @@ SwankJS.reload = function reload () {
   document.location.reload(true);
 };
 
-SwankJS.refreshCSS = function refreshCSS () {
+SwankJS.refreshCSS = function refreshCSS (filename) {
   // FIXME: this doesn't work in IE yet
   // FIXME: support refresh of individual CSS files
+  SwankJS.output("refreshing css: " + (filename || "<all>") + "\n");
   var links = document.getElementsByTagName('link');
   for (var i = 0; i < links.length; i++) {
     var link = links[i];
     if (link.rel.toLowerCase().indexOf('stylesheet') >=0 && link.href) {
-      var h = link.href.replace(/(&|\\?)forceReload=\d+/, "");
+      var h = link.href.replace(/(&|\?)forceReload=\d+/, "");
+      var hrefFilename = h.replace(/^.*\//g, "");
+      if (filename && hrefFilename != filename)
+        continue;
       link.href = h + (h.indexOf('?') >= 0 ? '&' : '?') + 'forceReload=' + Date.now();
+      if (filename)
+        return;
     }
   }
+  if (filename)
+    SwankJS.output("WARNING: <link> not found: " + filename + "\n");
 };
 
 /*

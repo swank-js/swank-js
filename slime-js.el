@@ -133,7 +133,14 @@
 
 (defun slime-js-refresh-css ()
   (interactive)
-  (slime-js-eval "SwankJS.refreshCSS()"
+  (slime-js-eval
+   (format "SwankJS.refreshCSS('%s')"
+           (replace-regexp-in-string
+            "(')" "\\\\\\1"
+            (if (string-match "\\.css$" (buffer-file-name))
+                (replace-regexp-in-string
+                 "^.*/" "" (buffer-file-name))
+              "")))
     #'(lambda (v)
         (message "Refreshing CSS"))))
 
