@@ -144,6 +144,7 @@ Handler.prototype.receive = function receive (message) {
     this.executive[d.form.name == "js:set-target-url" ? "setTargetUrl" : "setSlimeVersion"](expr);
     break;
   case "swank:interactive-eval":
+  case "swank:interactive-eval-region":
   case "swank:listener-eval":
     if (d.form.args.length != 1) {
       console.log("bad args len for SWANK:LISTENER-EVAL -- %s", d.form.args.length);
