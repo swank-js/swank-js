@@ -68,87 +68,113 @@ SwankJS.setPingEnabled = function setPingEnabled (enable) {
     this.stopPing();
 };
 
+SwankJS.makeSocketHandler = function makeSocketHandler (func) {
+  var self = this;
+  var socket = self.socket;
+  return function socketHandler () {
+    if (self.socket != socket)
+      return;
+    var args = [];
+    for (var i = 0; i < arguments.length; ++i)
+      args[i] = arguments[i];
+    func.apply(self, args);
+  };
+};
+
+SwankJS.url = null;
+
+SwankJS.setupSocket = function setupSocket (url) {
+  if (url)
+    this.url = url;
+  this.socket = io.connect(this.url, { "force new connection": true });
+  var self = this;
+  this.socket.on(
+    "connect",
+    this.makeSocketHandler(
+      function() {
+        if (self.reconnectIntervalId !== null) {
+          clearInterval(self.reconnectIntervalId);
+          self.reconnectIntervalId = null;
+        }
+        self.connected = true;
+        self.debug("connected");
+        self.socket.send(JSON.stringify({ "op": "handshake", "userAgent": navigator.userAgent }));
+        if (self.bufferedOutput.length > 0) {
+          for (var i = 0; i < self.bufferedOutput.length; ++i)
+            self.output(self.bufferedOutput[i]);
+          self.bufferedOutput = [];
+        }
+        self.lastMessageTime = new Date().getTime();
+        self.startPing();
+      }));
+  this.socket.on(
+    "message",
+    this.makeSocketHandler(
+      function swankjs_evaluate (m) {
+        m = JSON.parse(m);
+        self.lastMessageTime = new Date().getTime();
+        if (m.hasOwnProperty("pong"))
+          return;
+
+        self.debug("eval: %o", m);
+        // JS reentrancy is possible. I've observed it when using XSLTProcessor
+        self.evaluating = true;
+        try {
+          var r = window.eval(m.code);
+        } catch (e) {
+          var message = String(e);
+          if (message == "[object Error]") {
+            try {
+              message = "ERROR: " + e.message;
+            } catch(e1) {}
+          }
+          self.debug("error = %s", message);
+          self.socket.send(
+            JSON.stringify(
+              { "op": "result",
+                "id": m.id,
+                "error": message + "\n" + swank_printStackTrace({ e: e }).join("\n")
+              }
+            )
+          );
+          return;
+        } finally {
+          // don't let the connection break due to missed pings when evaluation takes too long
+          self.lastMessageTime = new Date().getTime();
+          self.evaluating = false;
+        }
+        self.debug("result = %s", String(r));
+        self.socket.send(
+          JSON.stringify(
+            { "op": "result",
+              "id": m.id,
+              "error": null,
+              "values": [String(r)]
+            }
+          )
+        );
+      }));
+  this.socket.on(
+    "disconnect",
+    this.makeSocketHandler(
+      function() {
+        self.debug("disconnected");
+        self.connected = false;
+      }));
+};
+
 SwankJS.setup = function setup (url) {
   try {
     if (parent.window && parent.window.document !== document && parent.window.SwankJS)
       return;
   } catch (e) {}
-  var self = this;
   // TBD: swank-js should proxy all requests to autoadd its scripts
   // (this way, the dynamic script loading stuff isn't necessary)
   // and to make flashsocket swf load from the same url as the
   // web app itself.
   // Don't forget about 'Host: ' header though!
   this.lastMessageTime = new Date().getTime();
-  this.socket = io.connect(url);
-  this.socket.on(
-    "connect",
-    function() {
-      if (self.reconnectIntervalId !== null) {
-        clearInterval(self.reconnectIntervalId);
-        self.reconnectIntervalId = null;
-      }
-      self.connected = true;
-      self.debug("connected");
-      self.socket.send(JSON.stringify({ "op": "handshake", "userAgent": navigator.userAgent }));
-      if (self.bufferedOutput.length > 0) {
-        for (var i = 0; i < self.bufferedOutput.length; ++i)
-          self.output(self.bufferedOutput[i]);
-        self.bufferedOutput = [];
-      }
-      self.lastMessageTime = new Date().getTime();
-      self.startPing();
-    });
-  this.socket.on(
-    "message", function swankjs_evaluate (m) {
-      m = JSON.parse(m);
-      self.lastMessageTime = new Date().getTime();
-      if (m.hasOwnProperty("pong"))
-        return;
-
-      self.debug("eval: %o", m);
-      // JS reentrancy is possible. I've observed it when using XSLTProcessor
-      self.evaluating = true;
-      try {
-        var r = window.eval(m.code);
-      } catch (e) {
-        var message = String(e);
-        if (message == "[object Error]") {
-          try {
-            message = "ERROR: " + e.message;
-          } catch(e1) {}
-        }
-        self.debug("error = %s", message);
-        self.socket.send(
-          JSON.stringify(
-            { "op": "result",
-              "id": m.id,
-              "error": message + "\n" + swank_printStackTrace({ e: e }).join("\n")
-            }
-          )
-        );
-        return;
-      } finally {
-        // don't let the connection break due to missed pings when evaluation takes too long
-        self.lastMessageTime = new Date().getTime();
-        self.evaluating = false;
-      }
-      self.debug("result = %s", String(r));
-      self.socket.send(
-        JSON.stringify(
-          { "op": "result",
-            "id": m.id,
-            "error": null,
-            "values": [String(r)]
-          }
-        )
-      );
-    });
-  this.socket.on(
-    "disconnect", function() {
-      self.debug("disconnected");
-      self.connected = false;
-    });
+  this.setupSocket(url);
 };
 
 SwankJS.startPing = function startPing () {
@@ -195,8 +221,13 @@ SwankJS.ping = function ping () {
 
 SwankJS.reconnect = function reconnect () {
   this.debug("reconnecting");
-  this.socket.disconnect();
-  this.socket.connect();
+  if (this.socket) {
+    try {
+      this.socket.disconnect();
+    } catch (e) {}
+    this.socket = null;
+  }
+  this.setupSocket();
 };
 
 // useful functions for the REPL / web apps
@@ -250,3 +281,6 @@ SwankJS.makeScriptElement = function makeScriptElement (src, content) {
 */
 
 SwankJS.setup('http://127.0.0.1:8009/');
+
+// TBD: look at document.location.href, if it's not localhost,
+// don't do setup, otherwise do it on DOM load (see how prototypejs etc does it)
