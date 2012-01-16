@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2010 Ivan Shvedunov. All rights reserved.
+// Copyright (c) 2012 Robert Krahn. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -111,10 +112,30 @@ SwankJS.setupSocket = function setupSocket (url) {
     "message",
     this.makeSocketHandler(
       function swankjs_evaluate (m) {
+        var props;
         m = JSON.parse(m);
         self.lastMessageTime = new Date().getTime();
         if (m.hasOwnProperty("pong"))
           return;
+
+        if (m.hasOwnProperty("completion")) {
+          try {
+            props = SwankJS.doCompletion(m.completion);
+          } catch(e) {
+            self.socket.send(JSON.stringify({
+              "op": "result",
+              "id": m.id,
+              "error": "Err listing properties\n" + swank_printStackTrace({ e: e }).join("\n")}));
+          }
+          self.debug("properties = %s", props);
+          self.socket.send(
+            JSON.stringify({
+              "op": "result",
+              "id": m.id,
+              "error": null,
+              "values": props}));
+          return;
+        }
 
         self.debug("eval: %o", m);
         // JS reentrancy is possible. I've observed it when using XSLTProcessor
