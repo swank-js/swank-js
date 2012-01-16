@@ -30,3 +30,8 @@ load("swank-js/json2.js");
 load("socket.io/socket.io.js");
 load("swank-js/stacktrace.js");
 load("swank-js/swank-js.js", function() { return !!window.io; });
+load("swank-js/swank-completion.js", function() { return !!window.SwankJS; });
+
+if (loadTests()) {
+  load("swank-js/browser-tests.js", function() { return window.SwankJS && SwankJS.doCompletion; });
+}

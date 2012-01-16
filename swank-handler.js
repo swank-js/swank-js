@@ -1,6 +1,7 @@
 // -*- mode: js2; js-run: "swank-handler-tests.js" -*-
 //
 // Copyright (c) 2010 Ivan Shvedunov. All rights reserved.
+// Copyright (c) 2012 Robert Krahn. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -166,6 +167,16 @@ Handler.prototype.receive = function receive (message) {
         cont();
       });
     return;
+  case "swank:simple-completions":
+    var obj_str = fromLisp(d.form.args[0], "@");
+    console.log("Called " + "swank:simple-completions: " + obj_str);
+    this.executive.listenerCompletion(
+      obj_str, function (values) {
+        if (values.length)
+          r.result = toLisp(values, "@");
+        cont();
+      });
+    return;
   default:
     // FIXME: handle unknown commands
   }
@@ -203,6 +214,11 @@ Remote.prototype.id = function id () {
 
 Remote.prototype.evaluate = function evaluate (id, str) {
   throw new Error("must override Remote.prototype.evaluate()");
+};
+
+Remote.prototype.completion = function completion (id, str) {
+  this.output("completion not yet implemented for " + this);
+  this.sendResult(id, []);
 };
 
 Remote.prototype.fullName = function fullName () {
@@ -366,6 +382,12 @@ Executive.prototype.listenerEval = function listenerEval (str, cont) {
   var id = Executive.nextId++;
   this.pendingRequests[id] = cont;
   this.activeRemote.evaluate(id, str);
+};
+
+Executive.prototype.listenerCompletion = function listenerCompletion(str, cont) {
+  var id = Executive.nextId++;
+  this.pendingRequests[id] = cont;
+  this.activeRemote.completion(id, str);
 };
 
 Executive.prototype.listRemotes = function listRemotes () {

@@ -144,6 +144,11 @@ BrowserRemote.prototype.evaluate = function evaluate (id, str) {
   this.pendingRequests[id] = new Date().getTime();
 };
 
+BrowserRemote.prototype.completion = function completion (id, str) {
+  this.client.send(JSON.stringify({ "id": id, "completion": str }));
+  this.pendingRequests[id] = new Date().getTime();
+};
+
 BrowserRemote.prototype.disconnect = function disconnect () {
   this.sweepRequests(true);
   swh.Remote.prototype.disconnect.call(this);
