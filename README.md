@@ -108,6 +108,8 @@ If you get warning about SLIME version mismatch, you may make it
 disappear until the next SLIME upgrade by typing *,js-slime-version*
 at the REPL and entering your SLIME version (e.g. 2010-11-13).
 
+### Connecting to a web browser ###
+
 Point your web browser to
 
     http://localhost:8009/swank-js/test.html
@@ -157,6 +159,9 @@ The sticky remote selection is saved in the config file, ~/.swankjsrc,
 so you don't need to do *,sticky-select-remote* after restarting the
 browser.
 
+
+### Connecting to a remote page ###
+
 Now, let's try to make it work with an actual site. swank-js acts as a
 proxy between your browser and the site so it can inject necessary
 script tags into HTML pages and avoid cross-domain HTTP request
@@ -199,6 +204,9 @@ and press C-M-x. Now you may try it out in the REPL:
 You may edit the function definition and update it using C-M-x any
 number of times.
 
+
+### Hacking CSS ###
+
 Now let's try some CSS hacking. Create a directory named zzz and start
 a Web server in it from your command prompt:
 
@@ -216,7 +224,7 @@ Now let's add the stylesheet to the reddit page:
 
     FIREFOX-3.6> $('head').append('<link rel="stylesheet" href="http://localhost:8000/a.css" type="text/css" />');
     [object Object]
-    
+
 You will see some parts of the page become green. Now, change green to
 blue in the CSS file and press C-M-x (it will save the file
 automatically):
@@ -231,6 +239,18 @@ AJAX application without reloading the page, which is often rather
 handy. Unlike editing CSS in Firebug in case when you're editing CSS
 of your own application changes will not disappear upon page reload
 (with reddit page you'll have to readd the stylesheet).
+
+
+### Embedding swank-js in a page ###
+
+This is useful for automatically connecting to a web page you develop
+locally without using the *,target-url* command and without changing
+the document URL for that page. When `node swank.js` is running embed
+
+    <script type="text/javascript" src="http://localhost:8009/swank-js/swank-js-inject.js"></script>
+
+and you are ready to go!
+
 
 Troubleshooting
 ---------------

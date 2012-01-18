@@ -1,6 +1,7 @@
 // -*- mode: js2 -*-
 //
 // Copyright (c) 2010 Ivan Shvedunov. All rights reserved.
+// Copyright (c) 2012 Robert Krahn. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -143,6 +144,11 @@ BrowserRemote.prototype.evaluate = function evaluate (id, str) {
   this.pendingRequests[id] = new Date().getTime();
 };
 
+BrowserRemote.prototype.completion = function completion (id, str) {
+  this.client.send(JSON.stringify({ "id": id, "completion": str }));
+  this.pendingRequests[id] = new Date().getTime();
+};
+
 BrowserRemote.prototype.disconnect = function disconnect () {
   this.sweepRequests(true);
   swh.Remote.prototype.disconnect.call(this);
@@ -163,6 +169,9 @@ HttpListener.prototype.clientFiles = {
   'stacktrace.js': 'stacktrace.js',
   'swank-js.js': 'swank-js.js',
   'load.js': 'load.js',
+  'swank-js-inject.js': 'swank-js-inject.js',
+  'swank-completion.js': 'swank-completion.js',
+  'browser-tests.js': 'browser-tests.js',
   'test.html': 'test.html'
 };
 
@@ -172,11 +181,7 @@ HttpListener.prototype.types = {
 };
 
 HttpListener.prototype.scriptBlock =
-  new Buffer(
-    '<script type="text/javascript" src="/swank-js/json2.js"></script>' +
-    '<script type="text/javascript" src="/socket.io/socket.io.js"></script>' +
-    '<script type="text/javascript" src="/swank-js/stacktrace.js"></script>' +
-    '<script type="text/javascript" src="/swank-js/swank-js.js"></script>');
+    new Buffer('<script type="text/javascript" src="/swank-js/swank-js-inject.js"></script>');
 
 HttpListener.prototype.findClosingTag = function findClosingTag (buffer, name) {
   // note: this function is suitable for <head> and <body> tags,
