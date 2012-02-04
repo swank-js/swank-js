@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // -*- mode: js2 -*-
 //
 // Copyright (c) 2010 Ivan Shvedunov. All rights reserved.
