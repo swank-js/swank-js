@@ -251,6 +251,12 @@ the document URL for that page. When `node swank.js` is running embed
 
 and you are ready to go!
 
+### Swank js as a booklarklet ###
+
+Now as easy as running a bookmarklet!  Just add a bookmark, and set this as the url:
+javascript:%28function%28%29%20%7Bvar%20head%3D%20document.getElementsByTagName%28%27head%27%29%5B0%5D%3Bvar%20script%3D%20document.createElement%28%27script%27%29%3Bscript.type%3D%20%27text/javascript%27%3Bscript.src%3D%20%27http%3A//localhost%3A8009/swank-js/swank-js-inject.js%27%3Bhead.appendChild%28script%29%3B%7D%29%28%29%3B
+
+
 
 Troubleshooting
 ---------------
