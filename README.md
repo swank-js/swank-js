@@ -251,7 +251,7 @@ the document URL for that page. When `node swank.js` is running embed
 
 and you are ready to go!
 
-### Swank js as a booklarklet ###
+### Swank js as a bookmarklet ###
 
 Now as easy as running a bookmarklet!  Just add a bookmark, and set this as the url:
 
