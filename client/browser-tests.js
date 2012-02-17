@@ -1,4 +1,4 @@
-// -*- mode: js2 -*-
+// -*- mode: js3 -*-
 //
 // Copyright (c) 2012 Robert Krahn. All rights reserved.
 //
@@ -40,25 +40,32 @@ function assert(val, msg) {
 }
 
 assert.equal = function equal(expected, actual, msg) {
-  assert(expected == actual, "Assertion failed: '" + actual + "' is not '" + expected + "' " + msg);
+  assert(expected == actual,
+         "Assertion failed: '" + actual + "' is not '" +
+         expected + "' " + (msg ? msg : ''));
 };
 
-var Tests = {
-  run: function() {
-    for (var name in this) {
-      if (this.hasOwnProperty(name) && name.match(/^test/)) {
-        console.log("Running " + name);
-        try {
-          this[name]();
-        } catch (e) {
-          console.error("Test " + name + " not successful: " + e);
-        }
+function test(testCase) {
+  for (var name in testCase) {
+    if (testCase.hasOwnProperty(name) && name.match(/^test/)) {
+      console.log("Running " + name);
+      try {
+        testCase[name]();
+      } catch (e) {
+        console.error("Test " + name + " not successful: " + e);
+      } finally {
+        testCase.tearDown && testCase.tearDown();
       }
     }
-    var msg = "All tests run OK!";
-    console.log(msg);
-    return msg;
-  },
+  }
+  var msg = "tests of " + testCase.name + " finished";
+  console.log(msg);
+  return msg;
+}
+
+test({
+  name: 'completion tests',
+
   testCompletionOfTopLevelString: function() {
     // "foooTestTopLev" -> ["foooTestTopLevelString"]
     var name = "foooTestTopLevelString";
@@ -68,6 +75,7 @@ var Tests = {
       assert.equal(name, result[0], "Result wrong?");
     });
   },
+
   testCompletionOfProperty: function() {
     // "testPropCompletion.foo.b" -> ["testPropCompletion.foo.bar"]
     var name = "testPropCompletion";
@@ -77,6 +85,7 @@ var Tests = {
       assert.equal("bar", result[0], "Result wrong?");
     });
   },
+
   testCompletionOfEverything: function() {
     // "testCompleteEverything." -> ["testCompleteEverything.foo", "testCompleteEverything.bar"]
     var name = "testCompleteEverything";
@@ -87,6 +96,39 @@ var Tests = {
       assert("bar", result[1], "Result 2 wrong? " + result);
     });
   }
-};
+});
 
-Tests.run();
+test({
+  name: 'CSS embed tests',
+
+  tearDown: function() {
+    var style = document.getElementById('swank-js-css');
+    style && style.parentNode.removeChild(style);
+  },
+
+  testCreatesStyleElement: function() {
+    var styleString = "body { margin: 10px }";
+    SwankJS.embedCSS(styleString);
+    var el = document.getElementById('swank-js-css');
+    assert(el, 'no style element created');
+    assert.equal(styleString, el.textContent);
+  },
+
+  testExtendsStyleElement: function() {
+    var styleString1 = "body { margin: 10px }",
+        styleString2 = "body { margin: 12px }";
+    SwankJS.embedCSS(styleString1);
+    SwankJS.embedCSS(styleString2);
+    var el = document.getElementById('swank-js-css');
+    assert.equal(styleString1 + '\n' + styleString2, el.textContent);
+  },
+
+  testClean: function() {
+    var styleString = "body { margin: 10px }";
+    SwankJS.embedCSS(styleString);
+    SwankJS.removeEmbeddedCSS();
+    var el = document.getElementById('swank-js-css');
+    assert(!el, 'style elemet not removed');
+  }
+
+});

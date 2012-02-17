@@ -271,19 +271,36 @@ SwankJS.refreshCSS = function refreshCSS (filename) {
   var links = document.getElementsByTagName('link');
   for (var i = 0; i < links.length; i++) {
     var link = links[i];
-    if (link.rel.toLowerCase().indexOf('stylesheet') >=0 && link.href) {
-      var h = link.href.replace(/(&|\?)forceReload=\d+/, "");
-      var hrefFilename = h.replace(/^.*\//g, "");
-      if (filename && hrefFilename != filename)
-        continue;
-      link.href = h + (h.indexOf('?') >= 0 ? '&' : '?') + 'forceReload=' + Date.now();
-      if (filename)
-        return;
-    }
+    if (link.rel.toLowerCase().indexOf('stylesheet') == -1 || !link.href) continue;
+    var h = link.href.replace(/(&|\?)forceReload=\d+/, ""),
+        hrefFilename = h.replace(/^.*\//g, "");
+    if (filename && hrefFilename != filename) continue;
+    link.href = h + (h.indexOf('?') >= 0 ? '&' : '?') + 'forceReload=' + Date.now();
+    if (filename) return;
   }
-  if (filename)
+  if (filename) {
     SwankJS.output("WARNING: <link> not found: " + filename + "\n");
+  }
 };
+
+SwankJS.cssElementId = 'swank-js-css';
+SwankJS.embedCSS = function embedCSS(cssString) {
+  var el = document.getElementById(this.cssElementId);
+  if (!el) {
+    el = document.createElement('style');
+    el.setAttribute('type', 'text/css');
+    el.setAttribute('id', this.cssElementId);
+    document.getElementsByTagName('head')[0].appendChild(el);
+  } else {
+    el.textContent += '\n';
+  }
+  el.textContent += cssString;
+};
+
+SwankJS.removeEmbeddedCSS = function removeEmbeddedCSS() {
+  var el = document.getElementById(this.cssElementId);
+  el && el.parentNode && el.parentNode.removeChild(el);
+}
 
 /*
 // we may need this later

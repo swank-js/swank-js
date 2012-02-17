@@ -86,7 +86,8 @@ to the list of contribs, otherwise adjust the load-path item):
 
         (add-hook 'css-mode-hook
                   (lambda ()
-                    (define-key css-mode-map "\M-\C-x" 'slime-js-refresh-css)))
+                    (define-key css-mode-map "\M-\C-x" 'slime-js-refresh-css)
+                    (define-key css-mode-map "\C-c\C-r" 'slime-js-embed-css)))
 
 Usage
 -----
@@ -207,6 +208,8 @@ number of times.
 
 ### Hacking CSS ###
 
+#### By updating a file ####
+
 Now let's try some CSS hacking. Create a directory named zzz and start
 a Web server in it from your command prompt:
 
@@ -239,6 +242,13 @@ AJAX application without reloading the page, which is often rather
 handy. Unlike editing CSS in Firebug in case when you're editing CSS
 of your own application changes will not disappear upon page reload
 (with reddit page you'll have to readd the stylesheet).
+
+
+#### By embedding CSS ####
+
+Alternatively to just try out a snippet of CSS you can select some CSS code and hit `C-c C-r`. This will send the code snippet (or the content of the whole buffer) to the browser and embed it inside a style element.
+
+To remove the embedded CSS run the command with a prefix `C-u C-c C-r`.
 
 
 ### Embedding swank-js in a page ###
