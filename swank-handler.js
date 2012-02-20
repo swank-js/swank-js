@@ -167,13 +167,29 @@ Handler.prototype.receive = function receive (message) {
         cont();
       });
     return;
+  case "swank:fuzzy-completions":
+    // TBD
+    r.result = toLisp([[], []], "@");
+    cont();
+    return;
   case "swank:simple-completions":
-    var obj_str = fromLisp(d.form.args[0], "@");
-    console.log("Called " + "swank:simple-completions: " + obj_str);
+    var prefix = d.form.args[0];
+    var objStr = fromLisp(prefix, "@");
+    console.log("Called " + "swank:simple-completions: " + objStr);
+    // FIXME: improve 'partial' handling (use common subprefix)
     this.executive.listenerCompletion(
-      obj_str, function (values) {
-        if (values.length)
-          r.result = toLisp(values, "@");
+      objStr, function (values) {
+        // based on the accepted answer at
+        // http://stackoverflow.com/questions/1916218/find-the-longest-common-starting-substring-in-a-set-of-strings
+        // (FIXME: move to swank-completion.js and test it)
+        values.sort();
+        var partial = values.length ? values[0] : prefix;
+        if (values.length > 1) {
+          var last = values[values.length - 1], n = last.length;
+          while (partial && last.indexOf(partial) < 0)
+            partial = partial.substring(0, --n);
+        }
+        r.result = toLisp([ values, partial ], "@");
         cont();
       });
     return;

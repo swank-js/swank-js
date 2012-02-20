@@ -28,15 +28,16 @@
 
 SwankJS.doCompletion = function doCompletion (str) {
   var r = [], obj, end_idx = str.length - 1;
-  function dotCompletion(str, regex) {
+  function dotCompletion(str, regex, skipPrefix) {
+    var addPrefix = skipPrefix ? "" : str + ".";
     obj = window.eval(str);
     if (obj) {
       for (var name in obj) {
         if (regex) {
           if (name.match(regex))
-            r.push(name);
+            r.push(addPrefix + name);
         } else {
-            r.push(name);
+            r.push(addPrefix + name);
         }
       }
     }
@@ -46,7 +47,7 @@ SwankJS.doCompletion = function doCompletion (str) {
     var dotIndex = str.lastIndexOf(".");
     var parent = dotIndex > -1 ? str.substring(0, dotIndex) : "window";
     var strToComplete = str.substring(dotIndex + 1, str.length);
-    return dotCompletion(parent, new RegExp("^" + strToComplete));
+    return dotCompletion(parent, new RegExp("^" + strToComplete), dotIndex < 0);
   }
 
   return (str[end_idx] == ".") ? dotCompletion(str.substring(0, end_idx)) : nameCompletion();
