@@ -132,6 +132,8 @@
         (message "Reloading the page"))))
 
 (defun slime-js-refresh-css ()
+  "If the current buffer points to a CSS file then the browser
+will reload it. Otherwise it will reload all linked stylesheets"
   (interactive)
   (slime-js-eval
    (format "SwankJS.refreshCSS('%s')"
@@ -143,6 +145,26 @@
               "")))
     #'(lambda (v)
         (message "Refreshing CSS"))))
+
+(defun slime-js-make-js-string (string)
+  "escapes the string so that it can be used as a string in js"
+  (concat "\"" (replace-regexp-in-string "\n" "\\n" string nil t) "\""))
+
+(defun slime-js-buffer-or-region-string ()
+  (let ((start (if (region-active-p) (region-beginning) (point-min)))
+         (end (if (region-active-p) (region-end) (point-max))))
+    (buffer-substring-no-properties start end)))
+
+(defun slime-js-embed-css (&optional arg)
+  "send an active region or the whole buffer string to the browser
+and embed it in a style element"
+  (interactive "P")
+  (let ((command (if arg "removeEmbeddedCSS" "embedCSS"))
+        (param (if arg "" (slime-js-make-js-string
+                           (slime-js-buffer-or-region-string)))))
+    (slime-js-eval
+     (format "SwankJS.%s(%s)" command param)
+     #'(lambda (v) (message "Embedding CSS")))))
 
 (defun slime-js-start-of-toplevel-form ()
   (interactive)
