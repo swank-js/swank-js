@@ -110,7 +110,7 @@ Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Ues
          (p (or (position
                  (completing-read prompt (slime-bogus-completion-alist remote-names)
                                   nil nil nil
-                                  'slime-remote-history nil)
+                                  'slime-js-remote-history nil)
                  remote-names :test #'equal)
                 (error "bad remote name"))))
     (first (elt remotes p))))
