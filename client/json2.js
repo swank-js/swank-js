@@ -238,9 +238,11 @@ if (!this.JSON) {
             value = holder[key];
 
 // If the value has a toJSON method, call it to obtain a replacement value.
-
         if (value && typeof value === 'object' &&
-                typeof value.toJSON === 'function') {
+                typeof value.toJSON === 'function' &&
+                // avoid problem with mootools
+                (!Array.prototype.toJSON ||
+                 Object.prototype.toString.apply(value) !== '[object Array]')) {
             value = value.toJSON(key);
         }
 
@@ -252,7 +254,6 @@ if (!this.JSON) {
         }
 
 // What happens next depends on the value's type.
-
         switch (typeof value) {
         case 'string':
             return quote(value);
