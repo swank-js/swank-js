@@ -69,10 +69,10 @@ function request (str) {
 }
 
 request('(:emacs-rex (swank:connection-info) "COMMON-LISP-USER" t 1)',
-        '(:return (:ok (:encoding (:coding-system "utf-8" :external-format "UTF-8") ' +
+        '(:return (:ok (:encoding (:coding-systems ("utf-8-unix")) ' +
                        ':lisp-implementation (:name "JS" :type "JS" :version "1.5") ' +
                        ':package (:name "NODE" :prompt "NODE") ' +
-                       ':pid 4242 :version "2010-11-13")) ' +
+                       ':pid 4242 :version "2012-02-12")) ' +
         '1)');
 
 // currently we just ignore swank-require

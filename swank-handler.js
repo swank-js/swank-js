@@ -38,7 +38,7 @@ var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp
     repr = lisp.repr, fromLisp = lisp.fromLisp, toLisp = lisp.toLisp;
 var Completion = require("./completion").Completion;
 
-var DEFAULT_SLIME_VERSION = "2010-11-13";
+var DEFAULT_SLIME_VERSION = "2012-02-12";
 
 function Handler (executive) {
   this.executive = executive;
@@ -84,8 +84,8 @@ Handler.prototype.receive = function receive (message) {
         r.result = toLisp(
           info,
           { "pid": "N:pid",
-            "encoding": { name: "encoding", spec: { "coding-system": "s:codingSystem",
-                                                    "external-format": "s:externalFormat" } },
+            "encoding": { name: "encoding",
+                          spec: { "coding-systems": "@:codingSystems" } },
             "package": { name: "packageSpec", spec: { name: "s", prompt: "s" } },
             "lisp-implementation": {
               name: "implementation",
@@ -372,7 +372,7 @@ Executive.prototype.connectionInfo = function connectionInfo (cont) {
     "slimeVersion",
     function (slimeVersion) {
       cont({ pid: self.pid === null ? process.pid : self.pid,
-             encoding: { codingSystem: "utf-8", externalFormat: "UTF-8" },
+             encoding: { codingSystems: [ "utf-8-unix" ] },
              packageSpec: { name: prompt, prompt: prompt },
              implementation: { type: "JS", name: "JS", version: "1.5" },
              version: slimeVersion || DEFAULT_SLIME_VERSION });
