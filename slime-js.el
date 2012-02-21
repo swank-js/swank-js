@@ -1,29 +1,52 @@
-;;;
-;;; Copyright (c) 2010 Ivan Shvedunov. All rights reserved.
-;;;
-;;; Redistribution and use in source and binary forms, with or without
-;;; modification, are permitted provided that the following conditions
-;;; are met:
-;;;
-;;; * Redistributions of source code must retain the above copyright
-;;; notice, this list of conditions and the following disclaimer.
-;;;
-;;; * Redistributions in binary form must reproduce the above
-;;; copyright notice, this list of conditions and the following
-;;; disclaimer in the documentation and/or other materials
-;;; provided with the distribution.
-;;;
-;;; THIS SOFTWARE IS PROVIDED BY THE AUTHOR 'AS IS' AND ANY EXPRESSED
-;;; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-;;; WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-;;; ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-;;; DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-;;; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-;;; GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-;;; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-;;; WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-;;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-;;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;;; slime-js.el --- Slime extension for swank-js.
+
+;; Author: Ivan Shvedunov
+;; Adapted-by: Irakli Gozalishvili
+;; URL: http://github.com/gozala/slime-js
+;; Version: 0.0.1
+;; Keywords: js, languages, lisp, slime
+;; Package-Requires: ((slime-repl "20100404") (slime "20100404"))
+
+;;; Licence: 
+;; Copyright (c) 2010 Ivan Shvedunov. All rights reserved.
+;;
+;; Redistribution and use in source and binary forms, with or without
+;; modification, are permitted provided that the following conditions
+;; are met:
+;;
+;; * Redistributions of source code must retain the above copyright
+;; notice, this list of conditions and the following disclaimer.
+;;
+;; * Redistributions in binary form must reproduce the above
+;; copyright notice, this list of conditions and the following
+;; disclaimer in the documentation and/or other materials
+;; provided with the distribution.
+;;
+;; THIS SOFTWARE IS PROVIDED BY THE AUTHOR 'AS IS' AND ANY EXPRESSED
+;; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+;; WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+;; ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+;; DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+;; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+;; GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+;; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+;; WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+(defgroup slime-js nil "Slime Extension for Swank.js"
+  :group 'slime-js)
+
+(defcustom  slime-js-swank-command "npm"
+  "Command for running the swank-js server from node.js"
+  :type 'string
+  :group 'slime-js)
+
+(defcustom slime-js-swank-args '("run" "swank")
+  "Command arguments for running the swank-js server from node.js.
+Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Uesrs/you."
+  :type '(repeat (string :tag "Arg"))
+  :group 'slime-js)
 
 (define-slime-contrib slime-js
   "Emacs-side support for Swank-JS."
@@ -45,6 +68,14 @@
         (slime-repl-insert-prompt)
         (when (plusp previouse-point)
           (goto-char (+ previouse-point slime-repl-input-start-mark)))))))
+
+(defvar slime-js-swank-buffer 'nil)
+
+; Just the bare-simplest thing that can be done for now.
+(defun slime-js-run-swank ()
+  "Runs the swank side of the equation."
+  (interactive)
+  (setq slime-js-swank-buffer (apply #'make-comint "swank-js"  (expand-file-name slime-js-swank-command) nil slime-js-swank-args)))
 
 (defun slime-js-event-hook-function (event)
   (when (equal "JS" (slime-lisp-implementation-type))
