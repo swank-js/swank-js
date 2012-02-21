@@ -56,32 +56,28 @@ will be eventually added.
 Installation
 ------------
 
-1. Install [Node.JS](http://nodejs.org), [npm](http://npmjs.org/) and
-then [Socket.IO](http://socket.io/):
+1. Install [Node.JS](http://nodejs.org) and [npm](http://npmjs.org/)
+2. Install swank-js from npm:
 
-        npm install socket.io
-2. Get recent [SLIME](http://common-lisp.net/project/slime/) from its CVS
-or the [git mirror](http://git.boinkor.net/gitweb/slime.git).
-3. Make sure you have latest [js2-mode](http://code.google.com/p/js2-mode/).
-Add it to your .emacs:
+        npm install -g swank-js
 
-        (add-to-list 'load-path "/path/to/js2-mode/directory")
-        (autoload 'js2-mode "js2-mode" nil t)
-        (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
-3. Create symbolic link to slime-js.el in the contrib subdirectory of
-SLIME project.
+3. Install [slime-js](https://github.com/Gozala/slime-js) into emacs from
+   http://marmalade-repo.org
+
+       M-x package-install slime-js 
+
+3. Install [js2-mode](http://code.google.com/p/js2-mode/) into emacs from
+   http://tromey.com/elpa/
+
 4. In your .emacs, add the following lines (you may use other key for
 slime-js-reload; also, if you're already using SLIME, just add slime-js
 to the list of contribs, otherwise adjust the load-path item):
-
-        (add-to-list 'load-path "/path/to/slime/installation")
-        (require 'slime)
-        (slime-setup '(slime-repl slime-js))
 
         (global-set-key [f5] 'slime-js-reload)
         (add-hook 'js2-mode-hook
                   (lambda ()
                     (slime-js-minor-mode 1)))
+
 5. If you're using CSS mode, you may want to add the following lines too:
 
         (add-hook 'css-mode-hook
@@ -92,13 +88,32 @@ to the list of contribs, otherwise adjust the load-path item):
 Usage
 -----
 
-Start swank-js with the following command in the project directory:
+If you want to use swank from the node project just add following to your
+package.json file:
 
-    node swank.js
+        "devDependencies": {
+          "swank-js": ">=0.0.1"
+        },
+        "scripts": {
+          "swank": "node node_modules/swank-js"
+        }
 
-Make SLIME connect to the backend using M-x slime-connect and
-specifying localhost and port 4005. You will see REPL buffer with the
-following prompt:
+Once this is done you should be able to run up a swank for this project by
+running:
+
+        npm run swank
+
+Alternatively you can install swank-js globally by running:
+
+        npm install -g swank-js
+
+Once installed you could run it from you project directory:
+
+        swank-js
+
+Make SLIME connect to the backend using `M-x slime-connect` and
+specifying `localhost` and port `4005`. You will see REPL buffer
+with the following prompt:
 
     NODE>
 
