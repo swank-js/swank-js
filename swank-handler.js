@@ -36,6 +36,7 @@ var assert = require("assert");
 var lisp = require("./lisp");
 var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp.cdr,
     repr = lisp.repr, fromLisp = lisp.fromLisp, toLisp = lisp.toLisp;
+var Completion = require("./completion").Completion;
 
 var DEFAULT_SLIME_VERSION = "2010-11-13";
 
@@ -176,20 +177,9 @@ Handler.prototype.receive = function receive (message) {
     var prefix = d.form.args[0];
     var objStr = fromLisp(prefix, "@");
     console.log("Called " + "swank:simple-completions: " + objStr);
-    // FIXME: improve 'partial' handling (use common subprefix)
     this.executive.listenerCompletion(
-      objStr, function (values) {
-        // based on the accepted answer at
-        // http://stackoverflow.com/questions/1916218/find-the-longest-common-starting-substring-in-a-set-of-strings
-        // (FIXME: move to swank-completion.js and test it)
-        values.sort();
-        var partial = values.length ? values[0] : prefix;
-        if (values.length > 1) {
-          var last = values[values.length - 1], n = last.length;
-          while (partial && last.indexOf(partial) < 0)
-            partial = partial.substring(0, --n);
-        }
-        r.result = toLisp([ values, partial ], "@");
+      objStr, function (result) {
+        r.result = toLisp([ result.values, result.partial ], "@");
         cont();
       });
     return;
@@ -233,8 +223,8 @@ Remote.prototype.evaluate = function evaluate (id, str) {
 };
 
 Remote.prototype.completion = function completion (id, str) {
-  this.output("completion not yet implemented for " + this);
-  this.sendResult(id, []);
+  console.log("complete: " + str);
+  this.sendResult(id, new Completion().complete(str));
 };
 
 Remote.prototype.fullName = function fullName () {

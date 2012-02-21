@@ -1,1 +1,1 @@
-SwankJS.setup();
+SwankJS.setup(swank_server);

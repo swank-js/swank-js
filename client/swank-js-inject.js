@@ -1,11 +1,12 @@
-
 /*
  * Add this script to your html file to connect to swank-js
  */
 
+if (!window.exports)
+  window.exports = {}; // FIXME: this may break something
 
-// TODO don't hardcode swank server
-var swank_server = "http://localhost:8009/";
+if (!window.swank_server)
+  window.swank_server = document.location.protocol + "//" + document.location.host + "/";
 
 function load(url, requirement) {
   if (requirement) {
@@ -29,9 +30,11 @@ function loadTests() {
 load("swank-js/json2.js");
 load("socket.io/socket.io.js");
 load("swank-js/stacktrace.js");
-load("swank-js/swank-js.js", function() { return !!window.io; });
-load("swank-js/swank-completion.js", function() { return !!window.SwankJS; });
+load("swank-js/swank-js.js", function () { return !!window.io; });
+load("swank-js/completion.js");
+// TBD: test in IE
+load("swank-js/load.js", function () { return !!window.SwankJS && !!window.Completion && document.body; });
 
 if (loadTests()) {
-  load("swank-js/browser-tests.js", function() { return window.SwankJS && SwankJS.doCompletion; });
+  load("swank-js/browser-tests.js", function() { return window.SwankJS && window.Completion; });
 }

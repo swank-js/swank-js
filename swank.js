@@ -165,14 +165,14 @@ HttpListener.prototype.clientVersion = "0.1";
 HttpListener.prototype.cachedFiles = {};
 
 HttpListener.prototype.clientFiles = {
-  'json2.js': 'json2.js',
-  'stacktrace.js': 'stacktrace.js',
-  'swank-js.js': 'swank-js.js',
-  'load.js': 'load.js',
-  'swank-js-inject.js': 'swank-js-inject.js',
-  'swank-completion.js': 'swank-completion.js',
-  'browser-tests.js': 'browser-tests.js',
-  'test.html': 'test.html'
+  'json2.js': 'client/json2.js',
+  'stacktrace.js': 'client/stacktrace.js',
+  'swank-js.js': 'client/swank-js.js',
+  'load.js': 'client/load.js',
+  'swank-js-inject.js': 'client/swank-js-inject.js',
+  'browser-tests.js': 'client/browser-tests.js',
+  'test.html': 'client/test.html',
+  'completion.js': 'completion.js'
 };
 
 HttpListener.prototype.types = {
@@ -371,9 +371,8 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
     return;
   }
   var file = path.substr(1).split('/').slice(1);
-
   var localPath = this.clientFiles[file];
-  if (req.method == 'GET' && localPath !== undefined){
+  if (req.method == 'GET' && localPath !== undefined) {
     // TBD: reenable caching, check datetime of the file
     // if (path in this.cachedFiles){
     //   this.sendCachedFile(req, res, path);
@@ -381,7 +380,7 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
     // }
 
     fs.readFile(
-      __dirname + '/client/' + localPath, function(err, data) {
+      __dirname + '/' + localPath, function(err, data) {
         if (err) {
           console.log("error: %s", err);
           self.notFound(res);

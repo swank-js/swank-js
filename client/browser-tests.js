@@ -63,6 +63,8 @@ function test(testCase) {
   return msg;
 }
 
+var completion = new Completion({ enumerablePropsOnly: true });
+
 test({
   name: 'completion tests',
 
@@ -70,9 +72,10 @@ test({
     // "foooTestTopLev" -> ["foooTestTopLevelString"]
     var name = "foooTestTopLevelString";
     addObjectToWindow(name, {}, function() {
-      var result = SwankJS.doCompletion("foooTestTopLev");
-      assert.equal(1, result.length, "result.length");
-      assert.equal(name, result[0], "Result wrong?");
+      var result = completion.complete("foooTestTopLev");
+      assert.equal(name, result.partial, "result.partial");
+      assert.equal(1, result.values.length, "result.values.length");
+      assert.equal(name, result.values[0], "Result wrong?");
     });
   },
 
@@ -80,9 +83,12 @@ test({
     // "testPropCompletion.foo.b" -> ["testPropCompletion.foo.bar"]
     var name = "testPropCompletion";
     addObjectToWindow(name, {foo: {bar: {}}}, function() {
-      var result = SwankJS.doCompletion("testPropCompletion.foo.b");
-      assert.equal(1, result.length, "result.length");
-      assert.equal("bar", result[0], "Result wrong?");
+      var result = completion.complete("testPropCompletion.foo.b");
+      assert.equal("testPropCompletion.foo.bar", result.partial,
+                   "result.partial");
+      assert.equal(1, result.values.length, "result.values.length");
+      assert.equal("testPropCompletion.foo.bar", result.values[0],
+                   "Result wrong?");
     });
   },
 
@@ -90,10 +96,13 @@ test({
     // "testCompleteEverything." -> ["testCompleteEverything.foo", "testCompleteEverything.bar"]
     var name = "testCompleteEverything";
     addObjectToWindow(name, {foo: {}, bar: {}}, function() {
-      var result = SwankJS.doCompletion("testCompleteEverything.");
-      assert.equal(2, result.length, "result.length");
-      assert("foo", result[0], "Result 1 wrong? " + result);
-      assert("bar", result[1], "Result 2 wrong? " + result);
+      var result = completion.complete("testCompleteEverything.");
+      assert.equal("testCompleteEverything.", result.partial, "result.partial");
+      assert.equal(2, result.values.length, "result,values.length");
+      assert.equal("testCompleteEverything.bar",
+                   result.values[0], "Result 1 wrong? " + result);
+      assert.equal("testCompleteEverything.foo",
+                   result.values[1], "Result 2 wrong? " + result);
     });
   }
 });

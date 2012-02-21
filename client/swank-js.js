@@ -120,20 +120,20 @@ SwankJS.setupSocket = function setupSocket (url) {
 
         if (m.hasOwnProperty("completion")) {
           try {
-            props = SwankJS.doCompletion(m.completion);
+            var result = self.completion.complete(m.completion);
           } catch(e) {
             self.socket.send(JSON.stringify({
               "op": "result",
               "id": m.id,
               "error": "Err listing properties\n" + swank_printStackTrace({ e: e }).join("\n")}));
           }
-          self.debug("properties = %s", props);
+          self.debug("properties = %s", result);
           self.socket.send(
             JSON.stringify({
               "op": "result",
               "id": m.id,
               "error": null,
-              "values": props}));
+              "values": result}));
           return;
         }
 
@@ -195,6 +195,7 @@ SwankJS.setup = function setup (url) {
   // web app itself.
   // Don't forget about 'Host: ' header though!
   this.lastMessageTime = new Date().getTime();
+  this.completion = new Completion();
   this.setupSocket(url);
 };
 
@@ -300,7 +301,7 @@ SwankJS.embedCSS = function embedCSS(cssString) {
 SwankJS.removeEmbeddedCSS = function removeEmbeddedCSS() {
   var el = document.getElementById(this.cssElementId);
   el && el.parentNode && el.parentNode.removeChild(el);
-}
+};
 
 /*
 // we may need this later
@@ -317,8 +318,6 @@ SwankJS.makeScriptElement = function makeScriptElement (src, content) {
   return script;
 };
 */
-
-SwankJS.setup('http://127.0.0.1:8009/');
 
 // TBD: look at document.location.href, if it's not localhost,
 // don't do setup, otherwise do it on DOM load (see how prototypejs etc does it)
