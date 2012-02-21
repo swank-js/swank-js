@@ -265,11 +265,11 @@ and you are ready to go!
 
 Now as easy as running a bookmarklet!  Just add a bookmark, and set this as the url:
 
-    javascript:%28function%28%29%20%7Bvar%20head%3D%20document.getElementsByTagName%28%27head%27%29%5B0%5D%3Bvar%20script%3D%20document.createElement%28%27script%27%29%3Bscript.type%3D%20%27text/javascript%27%3Bscript.src%3D%20%27http%3A//localhost%3A8009/swank-js/swank-js-inject.js%27%3Bhead.appendChild%28script%29%3B%7D%29%28%29%3B
+    javascript:(function(d)%7Bwindow.swank_server%3D%27http%3A%2F%2Flocalhost%3A8009%2F%27%3Bif(!d.getElementById(%27swank-js-inj%27))%7Bvar%20h%3Dd.getElementsByTagName(%27head%27)%5B0%5D%2Cs%3Dd.createElement(%27script%27)%3Bs.id%3D%27swank-js-inj%27%3Bs.type%3D%27text%2Fjavascript%27%3Bs.src%3Dswank_server%2B%27swank-js%2Fswank-js-inject.js%27%3Bh.appendChild(s)%3B%7D%7D)(document)%3B
 
 To disconnect you can use this bookmarklet:
 
-    javascript:(function()%7BSwankJS.socket.disconnect();%20SwankJS.stopPing();%20clearInterval(SwankJS.reconnectIntervalId);%7D)();
+    javascript:(function()%7BSwankJS.disconnect()%3B%7D)()%3B
 
 
 Troubleshooting

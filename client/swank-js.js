@@ -303,6 +303,16 @@ SwankJS.removeEmbeddedCSS = function removeEmbeddedCSS() {
   el && el.parentNode && el.parentNode.removeChild(el);
 };
 
+SwankJS.disconnect = function disconnect () {
+  // used by bookmarklets
+  this.socket.disconnect();
+  this.stopPing();
+  if (this.reconnectIntervalId !== null) {
+    clearInterval(this.reconnectIntervalId);
+    this.reconnectIntervalId = null;
+  }
+};
+
 /*
 // we may need this later
 
