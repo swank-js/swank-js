@@ -43,7 +43,6 @@ var executive = new swh.Executive({ config: cfg });
 
 var swankServer = net.createServer(
   function (stream) {
-    stream.setEncoding("utf-8");
     var handler = new swh.Handler(executive);
     var parser = new swp.SwankParser(
       function onMessage (message) {
@@ -51,9 +50,9 @@ var swankServer = net.createServer(
       });
     handler.on(
       "response", function (response) {
-        var responseText = swp.buildMessage(response);
-        console.log("response: %s", responseText);
-        stream.write(responseText);
+        var responseBuf = swp.buildMessage(response);
+        console.log("response: %s", responseBuf.toString());
+        stream.write(responseBuf);
       });
     stream.on(
       "data", function (data) {

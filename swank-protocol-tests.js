@@ -44,7 +44,7 @@ var parser = new swp.SwankParser(
 function feed (text) {
   for (var i = 1; i < arguments.length; ++i)
     expected.push(arguments[i]);
-  parser.execute(text);
+  parser.execute(new Buffer(text));
   assert.equal(0, expected.length);
 }
 
@@ -68,9 +68,19 @@ feed(" \"COMMON-LISP-USER\" t 1");
 feed(")",
      list(S(":emacs-rex"), list(S("swank:connection-info")),
           "COMMON-LISP-USER", S("t"), 1));
+feed('000047(:emacs-rex (:listener-eval "\\"\u0439\u0446\u0443\\"") "FIREFOX-9.0" :repl-thread 4)',
+     list(S(":emacs-rex"),
+                        list(S(":listener-eval"),
+                             '"\u0439\u0446\u0443"'),
+                        "FIREFOX-9.0", S(":repl-thread"), 4));
 
 assert.equal(
   "000015(:return (:ok nil) 1)",
-  swp.buildMessage(list(S(":return"), list(S(":ok"), nil), 1)));
+  swp.buildMessage(list(S(":return"), list(S(":ok"), nil), 1)).toString());
 
-// TBD: check unicode string handling (use \uxxxx notation)
+assert.equal(
+  '000047(:emacs-rex (:listener-eval "\\"\u0439\u0446\u0443\\"") "FIREFOX-9.0" :repl-thread 4)',
+  swp.buildMessage(list(S(":emacs-rex"),
+                        list(S(":listener-eval"),
+                             '"\u0439\u0446\u0443"'),
+                        "FIREFOX-9.0", S(":repl-thread"), 4)).toString());
