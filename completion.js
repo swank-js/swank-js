@@ -32,8 +32,10 @@
 
 function Completion (options) {
   // http://stackoverflow.com/questions/3277182/how-to-get-the-global-object-in-javascript
-  this.global = Function('return this')();
   this.options = options || {};
+  this.global = this.options.hasOwnProperty("global") ? options.global :
+    Function('return this')();
+  this.evaluate = this.options.hasOwnProperty("evaluate") ? options.evaluate : null;
 };
 
 Completion.prototype.enumerate = function enumerate (obj, func) {
@@ -57,8 +59,9 @@ Completion.prototype.dotCompletion = function dotCompletion (str, regex, skipPre
   var addPrefix = skipPrefix ? "" : str + ".";
   var obj;
   try {
-    obj = str === null ? this.global : this.global.eval(str);
+    obj = str === null ? this.global : this.evaluate ? this.evaluate(str) : this.global.eval(str);
   } catch (e) {
+    console.log("completion eval error: %s", e);
     obj = null;
   }
   if (!obj)

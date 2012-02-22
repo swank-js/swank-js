@@ -222,9 +222,13 @@ Remote.prototype.evaluate = function evaluate (id, str) {
   throw new Error("must override Remote.prototype.evaluate()");
 };
 
+Remote.prototype.completer = function completer () {
+  return new Completion();
+};
+
 Remote.prototype.completion = function completion (id, str) {
   console.log("complete: " + str);
-  this.sendResult(id, new Completion().complete(str));
+  this.sendResult(id, this.completer().complete(str));
 };
 
 Remote.prototype.fullName = function fullName () {
@@ -271,6 +275,16 @@ function DefaultRemote () {
 }
 
 util.inherits(DefaultRemote, Remote);
+
+DefaultRemote.prototype.completer = function completer () {
+  return new Completion(
+    {
+      global: this.context,
+      evaluate: function (str) {
+        return evalcx(str, this.context, "repl");
+      }.bind(this)
+    });
+};
 
 DefaultRemote.prototype.prompt = function prompt () {
   return "NODE";
