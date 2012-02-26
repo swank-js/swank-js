@@ -1,21 +1,21 @@
 {
   "name": "swank-js",
   "version": "0.0.1",
-  "description": "Asynchronously recursive, pure function <3 via lazy streams.",
+  "description": "Swank backend for Node.JS and in-browser JavaScript.",
   "keywords": [ "swank", "slime", "emacs", "repl" ],
   "author": "Ivan Shvedunov",
   "contributors": [
     "Robert Krahn",
     "Irakli Gozalishvili <rfobic@gmail.com>"
   ],
-  "homepage": "https://github.com/ivan4th/swank-js",
+  "homepage": "https://github.com/swank-js/swank-js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ivan4th/swank-js.git",
-    "web": "https://github.com/ivan4th/swank-js"
+    "url": "https://github.com/swank-js/swank-js.git",
+    "web": "https://github.com/swank-js/swank-js"
   },
   "bugs": {
-    "url": "https://github.com/ivan4th/swank-js/issues/"
+    "url": "https://github.com/swank-js/swank-js/issues/"
   },
   "main": "./swank.js",
   "bin": {
@@ -29,6 +29,6 @@
   },
   "licenses": [{
     "type" : "X11-style",
-    "url" : "https://raw.github.com/ivan4th/swank-js/master/LICENSE"
+    "url" : "https://raw.github.com/swank-js/swank-js/master/LICENSE"
   }]
 }

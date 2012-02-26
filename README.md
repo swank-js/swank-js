@@ -1,6 +1,10 @@
 swank-js
 ========
 
+** IMPORTANT NOTE **
+The primary swank-js source repository is now [https://github.com/swank-js/swank-js](https://github.com/swank-js/swank-js).
+
+
 swank-js provides [SLIME](http://common-lisp.net/project/slime/) REPL
 and other development tools for in-browser JavaScript and
 [Node.JS](http://nodejs.org). It consists of SWANK backend and
@@ -57,19 +61,31 @@ Installation
 ------------
 
 1. Install [Node.JS](http://nodejs.org) and [npm](http://npmjs.org/)
+
 2. Install swank-js from npm:
 
         npm install -g swank-js
 
-3. Install [slime-js](https://github.com/Gozala/slime-js) into emacs from
-   http://marmalade-repo.org
+3. Get recent [SLIME](http://common-lisp.net/project/slime/) from its CVS
+or the [git mirror](http://git.boinkor.net/gitweb/slime.git). The backend
+was verified to work with SLIME 2012-02-12, it may or may not work with
+other versions, but note that breaking change in the protocol was introduced
+in SLIME 2011-11-27.
 
-       M-x package-install slime-js 
+4. Make sure you have latest [js2-mode](http://code.google.com/p/js2-mode/).
+Add it to your .emacs:
 
-3. Install [js2-mode](http://code.google.com/p/js2-mode/) into emacs from
+        (add-to-list 'load-path "/path/to/js2-mode/directory")
+        (autoload 'js2-mode "js2-mode" nil t)
+        (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+
+5. Create symbolic link to slime-js.el in the contrib subdirectory of
+SLIME project.
+
+6. Install [js2-mode](http://code.google.com/p/js2-mode/) into emacs from
    http://tromey.com/elpa/
 
-4. In your .emacs, add the following lines (you may use other key for
+7. In your .emacs, add the following lines (you may use other key for
 slime-js-reload; also, if you're already using SLIME, just add slime-js
 to the list of contribs, otherwise adjust the load-path item):
 
@@ -78,7 +94,7 @@ to the list of contribs, otherwise adjust the load-path item):
                   (lambda ()
                     (slime-js-minor-mode 1)))
 
-5. If you're using CSS mode, you may want to add the following lines too:
+8. If you're using CSS mode, you may want to add the following lines too:
 
         (add-hook 'css-mode-hook
                   (lambda ()
