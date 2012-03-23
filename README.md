@@ -294,14 +294,13 @@ and you are ready to go!
 
 ### Swank js as a bookmarklet ###
 
-Now as easy as running a bookmarklet!  Just add a bookmark, and set this as the url:
-
-    javascript:(function(d)%7Bwindow.swank_server%3D%27http%3A%2F%2Flocalhost%3A8009%2F%27%3Bif(!d.getElementById(%27swank-js-inj%27))%7Bvar%20h%3Dd.getElementsByTagName(%27head%27)%5B0%5D%2Cs%3Dd.createElement(%27script%27)%3Bs.id%3D%27swank-js-inj%27%3Bs.type%3D%27text%2Fjavascript%27%3Bs.src%3Dswank_server%2B%27swank-js%2Fswank-js-inject.js%27%3Bh.appendChild(s)%3B%7D%7D)(document)%3B
-
-To disconnect you can use this bookmarklet:
-
-    javascript:(function()%7BSwankJS.disconnect()%3B%7D)()%3B
-
+You can bookmark
+<a href="javascript:(function(d)%7Bwindow.swank_server%3D%27http%3A%2F%2Flocalhost%3A8009%2F%27%3Bif(!d.getElementById(%27swank-js-inj%27))%7Bvar%20h%3Dd.getElementsByTagName(%27head%27)%5B0%5D%2Cs%3Dd.createElement(%27script%27)%3Bs.id%3D%27swank-js-inj%27%3Bs.type%3D%27text%2Fjavascript%27%3Bs.src%3Dswank_server%2B%27swank-js%2Fswank-js-inject.js%27%3Bh.appendChild(s)%3B%7D%7D)(document)%3B">
+swank connect</a> /
+<a
+href="javascript:(function()%7BSwankJS.disconnect()%3B%7D)()%3B">swank
+disconnect</a>
+links and use them on any page you'd like to play with.
 
 Troubleshooting
 ---------------
