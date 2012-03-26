@@ -40,6 +40,11 @@ var Completion = require("./completion").Completion;
 
 var DEFAULT_SLIME_VERSION = "2012-02-12";
 
+// hack for require.resolve("./relative") to work properly.
+module.filename = process.cwd() + '/repl';
+// hack for repl require to work properly with node_modules folders
+module.paths = require('module')._nodeModulePaths(module.filename);
+
 function Handler (executive) {
   this.executive = executive;
   var self = this;
@@ -265,7 +270,12 @@ function DefaultRemote () {
   this.context = Script.createContext();
   for (var i in global) this.context[i] = global[i];
   this.context.module = module;
-  this.context.require = require;
+  this.context.require = function(id, options) {
+    // Remove module from cache if reload is requested.
+    if (options && options.reload)
+      delete require.cache[require.resolve(id)];
+    return require(id);
+  }
   var self = this;
   this.context._swank = {
     output: function output (arg) {
