@@ -44,7 +44,9 @@
 
 (defcustom slime-js-swank-args '("run" "swank")
   "Command arguments for running the swank-js server from node.js.
-Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Uesrs/you."
+Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Uesrs/you.
+If you are using npm, then you probably want this to have 2 values: \"run\" \"swank\".
+If you want swank-js to run on a differnet port, add it as the third element to this list."
   :type '(repeat (string :tag "Arg"))
   :group 'slime-js)
 
@@ -97,6 +99,11 @@ Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Ues
 (defvar slime-js-remote-history nil
   "History list for JS remote names.")
 
+(defun slime-js-browse-test ()
+  "Interactive funciton to open the test page locally"
+  (interactive)
+  (browse-url "http://localhost:8009/client/test.html"))
+
 (defun slime-js-read-remote-index (&optional prompt)
   (let* ((completion-ignore-case nil)
          (remotes (slime-eval '(js:list-remotes)))
@@ -110,7 +117,7 @@ Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Ues
          (p (or (position
                  (completing-read prompt (slime-bogus-completion-alist remote-names)
                                   nil nil nil
-                                  'slime-remote-history nil)
+                                  'slime-js-remote-history nil)
                  remote-names :test #'equal)
                 (error "bad remote name"))))
     (first (elt remotes p))))
@@ -163,6 +170,8 @@ Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Ues
         (message "Reloading the page"))))
 
 (defun slime-js-refresh-css ()
+  "If the current buffer points to a CSS file then the browser
+will reload it. Otherwise it will reload all linked stylesheets"
   (interactive)
   (slime-js-eval
    (format "SwankJS.refreshCSS('%s')"
@@ -174,6 +183,26 @@ Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Ues
               "")))
     #'(lambda (v)
         (message "Refreshing CSS"))))
+
+(defun slime-js-make-js-string (string)
+  "escapes the string so that it can be used as a string in js"
+  (concat "\"" (replace-regexp-in-string "\n" "\\n" string nil t) "\""))
+
+(defun slime-js-buffer-or-region-string ()
+  (let ((start (if (region-active-p) (region-beginning) (point-min)))
+         (end (if (region-active-p) (region-end) (point-max))))
+    (buffer-substring-no-properties start end)))
+
+(defun slime-js-embed-css (&optional arg)
+  "send an active region or the whole buffer string to the browser
+and embed it in a style element"
+  (interactive "P")
+  (let ((command (if arg "removeEmbeddedCSS" "embedCSS"))
+        (param (if arg "" (slime-js-make-js-string
+                           (slime-js-buffer-or-region-string)))))
+    (slime-js-eval
+     (format "SwankJS.%s(%s)" command param)
+     #'(lambda (v) (message "Embedding CSS")))))
 
 (defun slime-js-start-of-toplevel-form ()
   (interactive)
