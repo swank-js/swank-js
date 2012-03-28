@@ -50,7 +50,7 @@ SwankJS.debug = function debug () {
   if (!window.console)
     return;
   var debug = console.debug || console.log;
-  if (!debug)
+  if (!debug || typeof debug !== "function")
     return;
   var args = [];
   for (var i = 0; i < arguments.length; ++i)
