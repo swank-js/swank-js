@@ -34,51 +34,23 @@ const MAX_MESSAGE_SIZE = 10 * 1024 * 1024;
 
 function SwankParser (onMessage) {
   this.onMessage = onMessage;
-  this.resetBuffer();
 };
 
 // FIXME: proper error handling (handle both packet parsing and reader errors)
-
-SwankParser.prototype.resetBuffer = function resetBuffer (len, handler) {
-  len = len || HEADER_LEN;
-  this.needChars = len;
-  this.handleData = handler || this.handleHeader;
-  this.stash = new Buffer(len);
-  this.pos = 0;
-};
-
 SwankParser.prototype.execute = function execute (buffer) {
-  var offset = 0;
-  while (offset < buffer.length)
-    offset += this.handleContent(buffer, offset);
-};
-
-SwankParser.prototype.handleContent = function handleContent (buffer, offset) {
-  var newPos = Math.min(this.needChars, this.pos + buffer.length - offset);
-  var bytesToCopy = newPos - this.pos;
-  buffer.copy(this.stash, this.pos, offset, offset + bytesToCopy);
-  this.pos = newPos;
-  if (this.pos == this.needChars)
-    this.handleData();
-  return bytesToCopy; // stashLen + newPos - stashLen
-};
-
-SwankParser.prototype.handleHeader = function handleHeader () {
-  var count = parseInt(this.stash.toString(), 16) || 0;
-  if (count > 0 && count < MAX_MESSAGE_SIZE)
-    this.resetBuffer(count, this.handleMessage);
-  else
-    this.resetBuffer();
+  var stash = buffer.toString();
+  var count = parseInt(stash.substr(0, HEADER_LEN), 16) || 0;
+  var message = stash.substr(HEADER_LEN, HEADER_LEN + count);
+  this.handleMessage(message);
 };
 
 SwankParser.prototype.handleMessage = function handleMessage (str) {
-  this.onMessage(readFromString(this.stash.toString())); // FIXME: handle errors
-  this.resetBuffer();
+  this.onMessage(readFromString(str));
 };
 
 function buildMessage (obj) {
   var str = obj.toString();
-  var lenStr = "" + Buffer.byteLength(str).toString(16);
+  var lenStr = "" + str.length.toString(16);
   while (lenStr.length < HEADER_LEN)
     lenStr = "0" + lenStr;
   return lenStr + str;
