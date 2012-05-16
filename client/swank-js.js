@@ -266,8 +266,6 @@ SwankJS.reload = function reload () {
 };
 
 SwankJS.refreshCSS = function refreshCSS (filename) {
-  // FIXME: this doesn't work in IE yet
-  // FIXME: support refresh of individual CSS files
   SwankJS.output("refreshing css: " + (filename || "<all>") + "\n");
   var links = document.getElementsByTagName('link');
   for (var i = 0; i < links.length; i++) {
@@ -276,7 +274,8 @@ SwankJS.refreshCSS = function refreshCSS (filename) {
     var h = link.href.replace(/(&|\?)forceReload=\d+/, ""),
         hrefFilename = h.replace(/^.*\//g, "");
     if (filename && hrefFilename != filename) continue;
-    link.href = h + (h.indexOf('?') >= 0 ? '&' : '?') + 'forceReload=' + Date.now();
+    link.href = h + (h.indexOf('?') >= 0 ? '&' : '?') + 'forceReload=' +
+      (Date.now ? Date.now() : +new Date());
     if (filename) return;
   }
   if (filename) {
