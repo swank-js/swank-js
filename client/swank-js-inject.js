@@ -6,7 +6,23 @@ if (!window.exports)
   window.exports = {}; // FIXME: this may break something
 
 if (!window.swank_server)
-  window.swank_server = document.location.protocol + "//" + document.location.host + "/";
+  window.swank_server = getSwankServerAddress();
+
+function getSwankServerAddress () {
+    var scripts = document.getElementsByTagName("script");
+    var swankUrls = Array.prototype.map.call(scripts, function(script) {
+        return script.src;
+    }).filter(function (href) {
+        return /swank-js/.test(href);
+    });
+
+    if (swankUrls) {
+        var swank_url = swankUrls[0];
+        return swank_url.substr(0, swank_url.indexOf("swank-js"));
+    }
+    //use current page address when not fount swank-js script
+    return document.location.protocol + "//" + document.location.host + "/";
+}
 
 function load(url, requirement) {
   if (requirement) {
