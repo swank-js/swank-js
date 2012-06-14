@@ -20,7 +20,7 @@ function getSwankServerAddress () {
         var swank_url = swankUrls[0];
         return swank_url.substr(0, swank_url.indexOf("swank-js"));
     }
-    //use current page address when not fount swank-js script
+    //use current page address when not found swank-js script
     return document.location.protocol + "//" + document.location.host + "/";
 }
 
