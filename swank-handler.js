@@ -150,6 +150,11 @@ Handler.prototype.receive = function receive (message) {
     }
     this.executive[d.form.name == "js:set-target-url" ? "setTargetUrl" : "setSlimeVersion"](expr);
     break;
+  case "js:pst":
+    var stackTrace = this.executive.activeRemote.lastErrorStackTrace || "";
+    console.log("Called swank:pst");
+    r.result = toLisp({value: stackTrace}, ["s:value"]);
+    break;
   case "swank:interactive-eval":
   case "swank:interactive-eval-region":
   case "swank:listener-eval":

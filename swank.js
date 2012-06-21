@@ -94,6 +94,7 @@ function BrowserRemote (clientInfo, client) {
         if (m.error) {
           this.output(m.error + "\n");
           this.sendResult(m.id, []);
+          this.lastErrorStackTrace = m.stack;
         } else
           this.sendResult(m.id, m.values);
         this.sweepRequests();
@@ -160,7 +161,7 @@ function HttpListener (cfg) {
   this.config = cfg;
 }
 
-HttpListener.prototype.clientVersion = "0.2";
+HttpListener.prototype.clientVersion = "0.2.1";
 
 HttpListener.prototype.cachedFiles = {};
 
