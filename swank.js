@@ -160,7 +160,7 @@ function HttpListener (cfg) {
   this.config = cfg;
 }
 
-HttpListener.prototype.clientVersion = "0.1";
+HttpListener.prototype.clientVersion = "0.2";
 
 HttpListener.prototype.cachedFiles = {};
 

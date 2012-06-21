@@ -165,14 +165,24 @@ SwankJS.setupSocket = function setupSocket (url) {
           self.evaluating = false;
         }
         self.debug("result = %s", String(r));
-        self.socket.send(
-          JSON.stringify(
-            { "op": "result",
-              "id": m.id,
-              "error": null,
-              "values": [String(r)]
+        var retval;
+        try {
+            if( typeof r === "function") {
+                retval = String(r);
+            } else {
+                retval = String(JSON.stringify(r, undefined, "  "));
             }
-          )
+        } catch (e) {
+            retval = String(r);
+        }
+        self.socket.send(
+            JSON.stringify(
+                { "op": "result",
+                  "id": m.id,
+                  "error": null,
+                  "values": [retval]
+                }
+            )
         );
       }));
   this.socket.on(
