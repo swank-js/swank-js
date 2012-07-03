@@ -272,7 +272,7 @@ SwankJS.refreshCSS = function refreshCSS (filename) {
     var link = links[i];
     if (link.rel.toLowerCase().indexOf('stylesheet') == -1 || !link.href) continue;
     var h = link.href.replace(/(&|\?)forceReload=\d+/, ""),
-        hrefFilename = h.replace(/^.*\//g, "");
+        hrefFilename = h.replace(/^.*\//g, "").replace(/\?.*$/, "");
     if (filename && hrefFilename != filename) continue;
     link.href = h + (h.indexOf('?') >= 0 ? '&' : '?') + 'forceReload=' +
       (Date.now ? Date.now() : +new Date());
