@@ -122,10 +122,16 @@ SwankJS.setupSocket = function setupSocket (url) {
           try {
             var result = self.completion.complete(m.completion);
           } catch(e) {
-            self.socket.send(JSON.stringify({
-              "op": "result",
-              "id": m.id,
-              "error": "Err listing properties\n" + swank_printStackTrace({ e: e }).join("\n")}));
+              self.socket.send(
+                  JSON.stringify(
+                      {
+                          "op": "result",
+                          "id": m.id,
+                          "error": "Err listing properties",
+                          "stack": swank_printStackTrace({ e: e }).join("\n")
+                      }
+                  )
+              );
           }
           self.debug("properties = %s", result);
           self.socket.send(
@@ -154,7 +160,8 @@ SwankJS.setupSocket = function setupSocket (url) {
             JSON.stringify(
               { "op": "result",
                 "id": m.id,
-                "error": message + "\n" + swank_printStackTrace({ e: e }).join("\n")
+                "error": message,
+                "stack": swank_printStackTrace({ e: e }).join("\n")
               }
             )
           );
@@ -165,14 +172,24 @@ SwankJS.setupSocket = function setupSocket (url) {
           self.evaluating = false;
         }
         self.debug("result = %s", String(r));
-        self.socket.send(
-          JSON.stringify(
-            { "op": "result",
-              "id": m.id,
-              "error": null,
-              "values": [String(r)]
+        var retval;
+        try {
+            if( typeof r === "function") {
+                retval = String(r);
+            } else {
+                retval = String(JSON.stringify(r, undefined, "  "));
             }
-          )
+        } catch (e) {
+            retval = String(r);
+        }
+        self.socket.send(
+            JSON.stringify(
+                { "op": "result",
+                  "id": m.id,
+                  "error": null,
+                  "values": [retval]
+                }
+            )
         );
       }));
   this.socket.on(

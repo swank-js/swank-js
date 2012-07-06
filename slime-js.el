@@ -151,6 +151,17 @@ Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Ues
   (:handler 'slime-js-set-slime-version)
   (:one-liner "Set SLIME version for swank-js"))
 
+(defun slime-js-pst ()
+  "show latest error message in active remote"
+  (interactive)
+  (let ((stack-trace (car (slime-eval '(js:pst)))))
+    (with-output-to-temp-buffer (concat "*slime js stack trace*")
+      (princ stack-trace))))
+
+(defslime-repl-shortcut slime-repl-js-print-stack-trace ("pst")
+  (:handler 'slime-js-pst)
+  (:one-liner "show latest error message in active remote"))
+
 ;; FIXME: should add an rpc command for browser-only eval
 
 (defun slime-js-eval (str &optional cont)
