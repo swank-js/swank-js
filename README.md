@@ -1,10 +1,6 @@
 swank-js
 ========
 
-** IMPORTANT NOTE **
-The primary swank-js source repository is now [https://github.com/swank-js/swank-js](https://github.com/swank-js/swank-js).
-
-
 swank-js provides [SLIME](http://common-lisp.net/project/slime/) REPL
 and other development tools for in-browser JavaScript and
 [Node.JS](http://nodejs.org). It consists of SWANK backend and
