@@ -346,13 +346,48 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
     });
 };
 
+HttpListener.prototype.getBookMarklets = function getBookMarklets() {
+	//TBD: Allow IPv6 Bookmarklets?
+	var ifaces = require('os').networkInterfaces();
+	var ips = [];
+
+	//TBD: This sucks and can probably be done much better in a functional style
+	for (dev in ifaces) {
+		console.log ("found device "+dev);
+		ifaces[dev].forEach(function(details) {
+			console.log(details);
+			if (details.family=='IPv4') {
+				ips.push(details.address);
+			}
+		});
+	}
+
+	//console.log(ips);
+
+	//TODO: the port is a magic number.  Needs to stop being magic.
+	var out = ips.map(function(ip){
+	    var bookmarklet = escape("(function(d){window.swank_server='http://"+ip+":8009/';if(!d.getElementById('swank-js-inj')){var h=d.getElementsByTagName('head')[0],s=d.createElement('script');s.id='swank-js-inj';s.type='text/javascript';s.src=swank_server+'swank-js/swank-js-inject.js';h.appendChild(s);}})(document);");
+		return '<li><a href="javascript:'+bookmarklet +'"> Connet to slime on '+ip+'</a><br/>javascript:'+bookmarklet+'</li>';			   
+	});
+	//console.log(out.join('\n'));
+	return out.join('\n');
+}
+
 HttpListener.prototype.sendCachedFile = function sendCachedFile (req, res, path) {
   if (req.headers['if-none-match'] == this.clientVersion) {
     res.writeHead(304);
     res.end();
   } else {
+    // sorry for this, but there is only one replacement, and only one file to replace, so
+    // for now... some bad code.  But if there needs to be a new replacement, or replacements
+    // on more then one file, this'll need updating.
+	var out = ((path == 'client/test.html') ? (this.cachedFiles[path].content+'').replace('<!--[[bookmarklets]]-->',this.getBookMarklets())
+			                                : this.cachedFiles[path].content);
+	//console.log(out);
+	//TBD: Remove the setting of the length header earlier on in the process. 
+    this.cachedFiles[path].headers['Content-Length'] = Buffer(out).length;
     res.writeHead(200, this.cachedFiles[path].headers);
-    res.end(this.cachedFiles[path].content, this.cachedFiles[path].encoding);
+    res.end(out, this.cachedFiles[path].encoding);
   }
 };
 
@@ -366,10 +401,13 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
   var path = url.parse(req.url).pathname, parts, cn;
   // console.log("%s %s", req.method, req.url);
   if (path && path.indexOf("/swank-js/") != 0) {
-    // console.log("--> proxy");
+    //console.log("--> proxy");
     this.proxyRequest(req, res);
     return;
   }
+
+
+  //console.log("--> internal");
   var file = path.substr(1).split('/').slice(1);
   var localPath = this.clientFiles[file];
   if (req.method == 'GET' && localPath !== undefined) {
@@ -387,6 +425,9 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
         } else {
           var ext = localPath.split('.').pop();
           self.cachedFiles[localPath] = {
+			// right now there is no difference between cached files
+            // and files inside of the client dir.  That should probably change 
+            // soon.
             headers: {
               'Content-Length': data.length,
               'Content-Type': self.types[ext],

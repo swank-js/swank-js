@@ -54,6 +54,21 @@ function Handler (executive) {
 
 util.inherits(Handler, EventEmitter);
 
+/**
+ * A simple object containing a hash table of handler-names and handlers
+ * A handler name is a simply transformed command from lisp.
+ * The "swank:" is removed, and - is turned into _
+ * so "swank:quit-lisp" becomes "quit_lisp".
+ * 
+ */
+Handler.prototype.messageHandlers = {};
+
+Handler.prototype.messageHandlers.quit_lisp = function(f) {
+	// TBD Maybe the remotes should be contacted so they can shut themselves down gracefully as well?
+    console.log("Quitting Swank!");
+	process.exit(0);
+}
+
 Handler.prototype.receive = function receive (message) {
   // FIXME: error handling
   console.log("Handler.prototype.receive(): %s", repr(message).replace(/\n/, "\\n"));
@@ -189,6 +204,11 @@ Handler.prototype.receive = function receive (message) {
       });
     return;
   default:
+	  var method = d.form.name.split(":")[1].replace(/-/g,'_');	// FIXME Brittle code, Expects ":" to be in the form name
+    console.log("Unfound Command, Trying to run: "+method);
+    if (this.messageHandlers.hasOwnProperty(method)) {
+      this.messageHandlers[method](d.form);		
+	}
     // FIXME: handle unknown commands
   }
   cont();
