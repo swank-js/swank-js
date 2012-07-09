@@ -44,7 +44,9 @@
 
 (defcustom slime-js-swank-args '("run" "swank")
   "Command arguments for running the swank-js server from node.js.
-Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Uesrs/you."
+Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Uesrs/you.
+If you are using npm, then you probably want this to have 2 values: \"run\" \"swank\".
+If you want swank-js to run on a differnet port, add it as the third element to this list."
   :type '(repeat (string :tag "Arg"))
   :group 'slime-js)
 
@@ -96,6 +98,11 @@ Note that file paths need to be complete file paths, i.e. ~ to /home/you or /Ues
 
 (defvar slime-js-remote-history nil
   "History list for JS remote names.")
+
+(defun slime-js-browse-test ()
+  "Interactive funciton to open the test page locally"
+  (interactive)
+  (browse-url "http://localhost:8009/client/test.html"))
 
 (defun slime-js-read-remote-index (&optional prompt)
   (let* ((completion-ignore-case nil)
