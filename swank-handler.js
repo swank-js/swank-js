@@ -300,8 +300,17 @@ function DefaultRemote () {
   this.context._swank = {
     output: function output (arg) {
       self.output(arg);
+    },
+
+    inspect: function inspect () {
+      Array.prototype.forEach.call(arguments, function (arg) {      
+        self.output(util.inspect(arg, false, 10));
+        self.output('\n');
+      }); 
     }
+    
   };
+  this.context.inspect = this.context._swank.inspect;
 }
 
 util.inherits(DefaultRemote, Remote);
