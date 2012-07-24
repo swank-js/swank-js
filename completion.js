@@ -45,10 +45,11 @@ Completion.prototype.enumerate = function enumerate (obj, func) {
 
 if (Object.getOwnPropertyNames && ({}).__proto__) {
   Completion.prototype.getAllProperties = function getAllProperties (obj, func) {
-    for (; obj; obj = obj.__proto__) {
+    for (; obj !== null && obj !== undefined; obj = obj.__proto__) {
       // Prevent Object.getOwnPropertyNames throwing an error on
       // unboxed types (number, string, boolean)
-      if(obj instanceof Object)
+      if(typeof obj !== 'number' && typeof obj !== 'string'
+         && typeof obj !== 'boolean')
         Object.getOwnPropertyNames(obj).forEach(func);
     }
   };
@@ -68,7 +69,7 @@ Completion.prototype.dotCompletion = function dotCompletion (str, regex, skipPre
     console.log("completion eval error: %s", e);
     obj = null;
   }
-  if (!obj)
+  if (obj === null || obj === undefined)
     return [];
   var r = [];
   getProps(
