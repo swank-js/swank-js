@@ -104,6 +104,23 @@ test({
       assert.equal("testCompleteEverything.foo",
                    result.values[1], "Result 2 wrong? " + result);
     });
+  },
+
+  testCompletionOfString: function() {
+    // "'foo'.charCod" -> ["'foo'.charCodeAt"]
+    completion = new Completion({enumerablePropsOnly: false});
+    var result = completion.complete("'foo'.charCod");
+    assert.equal("'foo'.charCodeAt", result.partial, "result.partial");
+    assert.equal(1, result.values.length, "result,values.length");
+    assert.equal("'foo'.charCodeAt", result.values[0], "Result wrong? " + result);
+  },
+
+  testCompletionOfArrayIgnoresIndices: function() {
+    var name = "testCompletionOfArrayIgnoresIndices";
+    addObjectToWindow(name, [1, 2, 3], function() {
+      var result = completion.complete(name + ".");
+      assert(result.values.indexOf(name + ".0") === -1, "numeric index included")
+    });
   }
 });
 
