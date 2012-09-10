@@ -26,6 +26,21 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+var isNode = typeof module !== 'undefined' && module.exports;
+
+if (isNode) {
+  var io = require('socket.io-client'),
+      vm = require('vm');
+  global.SwankJS = SwankJS;
+  global.Completion = require('../Completion').Completion;
+  global.swank_printStackTrace = require('./stacktrace').swank_printStackTrace;
+  window = global;
+  window.navigator = {userAgent: "nodejs swank client"};
+  window.eval = function(code) {
+    return vm.runInThisContext(code, 'SwankJS node client');
+  }
+}
+
 var SwankJS = {
   socket: null,
   connected: false,
@@ -87,6 +102,7 @@ SwankJS.url = null;
 SwankJS.setupSocket = function setupSocket (url) {
   if (url)
     this.url = url;
+debugger
   this.socket = io.connect(this.url, { "force new connection": true });
   var self = this;
   this.socket.on(
@@ -164,13 +180,19 @@ SwankJS.setupSocket = function setupSocket (url) {
           self.lastMessageTime = new Date().getTime();
           self.evaluating = false;
         }
-        self.debug("result = %s", String(r));
+        var resultString;
+        try {
+          resultString = String(r);
+        } catch(e) {
+          resultString = "Error stringifying result: " + e;
+        }
+        self.debug("result = %s", resultString);
         self.socket.send(
           JSON.stringify(
             { "op": "result",
               "id": m.id,
               "error": null,
-              "values": [String(r)]
+              "values": [resultString]
             }
           )
         );
@@ -311,6 +333,10 @@ SwankJS.disconnect = function disconnect () {
     this.reconnectIntervalId = null;
   }
 };
+
+if (isNode) {
+    module.exports = SwankJS;
+}
 
 /*
 // we may need this later

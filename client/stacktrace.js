@@ -354,3 +354,5 @@ swank_printStackTrace.implementation.prototype = {
         return '(?)';
     }
 };
+
+exports.swank_printStackTrace = swank_printStackTrace;
