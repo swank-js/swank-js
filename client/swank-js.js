@@ -35,7 +35,7 @@ if (isNode) {
   global.Completion = require('../Completion').Completion;
   global.swank_printStackTrace = require('./stacktrace').swank_printStackTrace;
   window = global;
-  window.navigator = {userAgent: "nodejs swank client"};
+  window.navigator = {userAgent: "nodejs-swank-client"};
   window.eval = function(code) {
     return vm.runInThisContext(code, 'SwankJS node client');
   }

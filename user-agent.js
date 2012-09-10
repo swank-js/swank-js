@@ -39,7 +39,8 @@ var RX_TABLE = [
     [ /^.*Qt\/(\d+\.\d+).*$/, "QtWeb $1" ],
     [ /^.*WebKit.*$/, "WebKit" ],
     [ /^.*Gecko.*$/, "Gecko" ],
-    [ /^.*MSIE (\d+\.\d+).*$/, "MSIE $1" ]
+    [ /^.*MSIE (\d+\.\d+).*$/, "MSIE $1" ],
+    [ /^nodejs-swank-client$/, "nodejs/external" ]
 ];
 
 exports.recognize = function recognize (name) {

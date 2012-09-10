@@ -22,7 +22,7 @@
     "swank-js": "./swank.js"
   },
   "dependencies": {
-    "socket.io": ">=0.8.7",
+    "socket.io": ">=0.9",
     "socket.io-client": ">=0.9"
   },
   "scripts": {
