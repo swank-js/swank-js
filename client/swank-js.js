@@ -100,9 +100,7 @@ SwankJS.makeSocketHandler = function makeSocketHandler (func) {
 SwankJS.url = null;
 
 SwankJS.setupSocket = function setupSocket (url) {
-  if (url)
-    this.url = url;
-debugger
+  if (url) this.url = url;
   this.socket = io.connect(this.url, { "force new connection": true });
   var self = this;
   this.socket.on(
