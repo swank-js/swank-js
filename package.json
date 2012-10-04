@@ -1,12 +1,13 @@
 {
   "name": "swank-js",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Swank backend for Node.JS and in-browser JavaScript.",
   "keywords": [ "swank", "slime", "emacs", "repl" ],
   "author": "Ivan Shvedunov",
   "contributors": [
     "Robert Krahn",
-    "Irakli Gozalishvili <rfobic@gmail.com>"
+    "Irakli Gozalishvili <rfobic@gmail.com>",
+    "Jonathan Arkell <jonnay@jonnay.net>"
   ],
   "homepage": "https://github.com/swank-js/swank-js",
   "repository": {
