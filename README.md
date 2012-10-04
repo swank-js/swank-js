@@ -1,11 +1,21 @@
 swank-js
 ========
 
+NOTE: the official repo is at [[https://github.com/swank-js/swank-js]].
+
 swank-js provides [SLIME](http://common-lisp.net/project/slime/) REPL
 and other development tools for in-browser JavaScript and
 [Node.JS](http://nodejs.org). It consists of SWANK backend and
 accompanying SLIME contrib. [Socket.IO](http://socket.io/) is used to
 communicate with wide range of web browsers.
+
+Request for Contributors
+------------------------
+
+A lot of the contributors of this project are strapped for time, and 
+we could use some more. 
+
+Please see: https://github.com/swank-js/swank-js/issues/52
 
 Motivation
 ----------
