@@ -298,7 +298,7 @@ the document URL for that page. When `node swank.js` is running embed
 
 and you are ready to go!
 
-### Swank js as a bookmarklet ###
+### swank-js as a bookmarklet ###
 
 You can bookmark
 <a href="javascript:(function(d)%7Bwindow.swank_server%3D%27http%3A%2F%2Flocalhost%3A8009%2F%27%3Bif(!d.getElementById(%27swank-js-inj%27))%7Bvar%20h%3Dd.getElementsByTagName(%27head%27)%5B0%5D%2Cs%3Dd.createElement(%27script%27)%3Bs.id%3D%27swank-js-inj%27%3Bs.type%3D%27text%2Fjavascript%27%3Bs.src%3Dswank_server%2B%27swank-js%2Fswank-js-inject.js%27%3Bh.appendChild(s)%3B%7D%7D)(document)%3B">
@@ -307,6 +307,16 @@ swank connect</a> /
 href="javascript:(function()%7BSwankJS.disconnect()%3B%7D)()%3B">swank
 disconnect</a>
 links and use them on any page you'd like to play with.
+
+### swank-js from another node.js process ###
+
+When installed globally (`npm install -g swank-js`) you can connect another node.js process to the swank-js node process via
+
+```js
+require("swank-js/client/node").setupNodeJSClient();
+```
+
+Optionally you can pass in *swank_server_host* and *swank_server_port* as arguments to the `setupNodeJSClient` call.
 
 Troubleshooting
 ---------------
