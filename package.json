@@ -1,6 +1,6 @@
 {
   "name": "swank-js",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Swank backend for Node.JS and in-browser JavaScript.",
   "keywords": [ "swank", "slime", "emacs", "repl" ],
   "author": "Ivan Shvedunov",
