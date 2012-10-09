@@ -76,6 +76,7 @@ var USER_AGENT_TESTS = [
   [ "MSIE 2.0",        "Mozilla/1.22 (compatible; MSIE 2.0d; Windows NT)" ],
   [ "MSIE 1.5",        "Mozilla/1.22 (compatible; MSIE 1.5; Windows NT)" ],
   [ "MSIE 1.0",        "Mozilla/1.0 (compatible; MSIE 1.0; Windows 3.11)" ], // made up
+  [ "nodejs/external", "nodejs-swank-client" ],
   [ "unknown",         "don't know" ],
   [ "unknown",         "" ]
 ];
