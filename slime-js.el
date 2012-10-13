@@ -158,6 +158,106 @@ If you want swank-js to run on a differnet port, add it as the third element to 
   (:handler 'slime-js-set-slime-version)
   (:one-liner "Set SLIME version for swank-js"))
 
+(defvar slime-js-require-history nil
+  "History list for slime-js ,require command (`slime-js-require')")
+
+(defvar slime-js-available-modules nil
+  "List of core Node modules, plus any in node_modules directories.
+
+Dynamically bound in `slime-js-read-module-name'.")
+
+(defvar slime-js-node-core-modules
+  '("assert" "buffer" "buffer_ieee754" "child_process" "cluster" "console"
+    "constants" "crypto" "dgram" "dns" "domain" "events" "freelist" "fs" "http"
+    "https" "module" "net" "os" "path" "punycode" "querystring" "readline"
+    "repl" "stream" "string_decoder" "sys" "timers" "tls" "tty" "url" "util"
+    "vm" "zlib")
+  "List of modules in the Node.JS core.")
+
+(defun slime-js-require (module)
+  "Load a node.js module via require(), with completion on module names.
+
+Treats module names that begin with `.' or `/' as filenames for
+completion purposes, resolving relative paths with respect to the
+directory where swank-js was started.  Otherwise, attempts to
+complete the module name by searching the list of core Node
+modules, plus installed modules in relevant node_modules
+directories. See `slime-js-node-core-modules'.
+
+Core modules and those loaded from node_modules directories are
+assigned to a variable of the same name. Modules loaded from
+filenames are assigned to a variable with the same name as the
+file, minus any extension."
+  (interactive (list (slime-js-read-module-name)))
+  (let* ((var-name
+          (replace-regexp-in-string
+           "[^A-Za-z0-9_]" "_"
+           (file-name-sans-extension
+            (file-name-nondirectory module))))
+         (js (format "%s = require('%s');" var-name module)))
+    (message js)
+    (slime-js-eval js)))
+
+(defun slime-js-read-module-name ()
+  "Read the name of a node.js module with minibuffer completion."  
+  (let ((slime-js-available-modules
+         (append
+          slime-js-node-core-modules
+          (slime-js-local-module-list))))
+    (completing-read "Module: "
+                     (completion-table-dynamic
+                      #'slime-js-complete-module-name)
+                     nil nil "" 'slime-js-require-history)))
+
+(defun slime-js-complete-module-name (module)
+  "Dynamic completion function for reading Node.JS module names"
+  (cond ((or (string= module ".") (string= module ".."))
+         nil)
+
+        ((string-match-p "^[./]" module)
+         (let ((directory (file-name-directory module)))
+           (mapcar
+            #'(lambda (file) (list (concat directory file)))
+            (remove-if
+             (lambda (file) (string-match-p "^\\." file))
+             (file-name-all-completions
+              (file-name-nondirectory module)
+              (expand-file-name directory (slime-js-module-root)))))))
+
+        (t
+         (all-completions module slime-js-available-modules))))
+
+(defun slime-js-local-module-list ()
+  "Return a list of modules installed in node_modules/ directories.
+
+Looks for node_modules/ directories by starting in `slime-js-root'
+and moving up the filesystem to the root directory."
+  ;; TODO: Cache these two values?
+  (let ((root-dir (slime-js-module-root))
+        (node-module-dirs (slime-js-node-module-dirs))
+        (modules '()))
+    (dolist (dir node-module-dirs)
+      (when (file-directory-p dir)
+        (setq modules
+              (cons
+               (directory-files dir nil "^[^.]")
+               modules))))
+    (apply #'append modules)))
+
+(defun slime-js-node-module-dirs ()
+  "Return the list of node_modules directories the node.js process will search."
+  (cdr (slime-eval '(js:list-module-paths))))
+
+(defun slime-js-module-root ()
+  "Return the absolute directory where node.js resolves relative filenames."
+  ;; js:module-filename returns the directory + "/repl"
+  (file-name-directory (cadr (slime-eval '(js:module-filename)))))
+
+(defslime-repl-shortcut slime-repl-js-require ("require")
+  (:handler 'slime-js-require)
+  (:one-liner "Require a Node.JS module"))
+
+
 ;; FIXME: should add an rpc command for browser-only eval
 
 (defun slime-js-eval (str &optional cont)
