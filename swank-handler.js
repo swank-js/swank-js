@@ -165,6 +165,12 @@ Handler.prototype.receive = function receive (message) {
     }
     this.executive[d.form.name == "js:set-target-url" ? "setTargetUrl" : "setSlimeVersion"](expr);
     break;
+  case "js:list-module-paths":
+    r.result = toLisp({ paths: module.paths }, [S(":paths"), "R:paths"]);
+    break;
+  case "js:module-filename":
+    r.result = toLisp({ filename: module.filename }, [S(":filename"), "s:filename"]);
+    break;
   case "swank:interactive-eval":
   case "swank:interactive-eval-region":
   case "swank:listener-eval":
