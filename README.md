@@ -1,7 +1,7 @@
 swank-js
 ========
 
-NOTE: the official repo is at [[https://github.com/swank-js/swank-js]].
+NOTE: the official repo is at [[https://github.com/swank-js/swank-js ]].
 
 swank-js provides [SLIME](http://common-lisp.net/project/slime/) REPL
 and other development tools for in-browser JavaScript and
