@@ -73,7 +73,7 @@ Installation
         npm install -g swank-js
 
 3. Get recent [SLIME](http://common-lisp.net/project/slime/) from its CVS
-or the [git mirror](http://git.boinkor.net/gitweb/slime.git). The backend
+or the [git mirror](https://github.com/antifuchs/slime.git). The backend
 was verified to work with SLIME 2012-02-12, it may or may not work with
 other versions, but note that breaking change in the protocol was introduced
 in SLIME 2011-11-27.
