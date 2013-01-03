@@ -91,7 +91,8 @@ Completion.prototype.nameCompletion = function nameCompletion(str) {
   var parent = dotIndex >= 0 ? str.substring(0, dotIndex) : null;
   var strToComplete = str.substring(dotIndex + 1, str.length);
   // console.log("dotIndex %s, strToComplete %s", dotIndex, strToComplete);
-  return this.dotCompletion(parent, new RegExp("^" + strToComplete), dotIndex < 0);
+  var strRegex = new RegExp("^" + this.escapeRegex(strToComplete));
+  return this.dotCompletion(parent, strRegex, dotIndex < 0);
 };
 
 Completion.prototype.doCompletion = function doCompletion (str) {
@@ -109,6 +110,10 @@ Completion.prototype.complete = function complete (prefix) {
       partial = partial.substring(0, --n);
   }
   return { values: values, partial: partial };
+};
+
+Completion.prototype.escapeRegex = function escapeRegex (str) {
+  return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
 };
 
 exports.Completion = Completion;
