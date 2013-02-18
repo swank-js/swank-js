@@ -113,12 +113,14 @@ Usage
 If you want to use swank from the node project just add following to your
 package.json file:
 
-        "devDependencies": {
-          "swank-js": ">=0.0.1"
+      { 
+       	 "devDependencies": {
+         "swank-js": ">=0.0.1"
         },
-        "scripts": {
+          "scripts": {
           "swank": "node node_modules/swank-js"
         }
+      }
 
 Once this is done you should be able to run up a swank for this project by
 running:
