@@ -28,8 +28,16 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var EventEmitter = require("events").EventEmitter;
-var Script = require('vm').Script;
-var evalcx = Script.runInContext;
+var vm = require('vm'), Script = vm.Script;
+function evalcx(code, context, filename) {
+  try {
+    return vm.runInThisContext(code, filename);
+  } catch (err) {
+    var regex = new RegExp('(at ' + filename + ':.*)[\\s\\S]*');
+    err.stack = err.stack.replace(regex, '$1');
+    throw err;
+  }
+};
 var util = require("util");
 var url = require("url");
 var assert = require("assert");
