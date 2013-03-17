@@ -55,6 +55,11 @@ var swankServer = net.createServer(
         console.log("response: %s", responseBuf.toString());
         stream.write(responseBuf);
       });
+    handler.on(
+      "quit", function (response) {
+        console.log("quit from client");
+        stream.end();
+      });
     stream.on(
       "data", function (data) {
         parser.execute(data);

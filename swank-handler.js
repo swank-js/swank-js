@@ -63,12 +63,6 @@ util.inherits(Handler, EventEmitter);
  */
 Handler.prototype.messageHandlers = {};
 
-Handler.prototype.messageHandlers.quit_lisp = function(f) {
-	// TBD Maybe the remotes should be contacted so they can shut themselves down gracefully as well?
-    console.log("Quitting Swank!");
-	process.exit(0);
-}
-
 Handler.prototype.receive = function receive (message) {
   // FIXME: error handling
   console.log("Handler.prototype.receive(): %s", repr(message).replace(/\n/, "\\n"));
@@ -209,11 +203,14 @@ Handler.prototype.receive = function receive (message) {
         cont();
       });
     return;
+  case "swank:quit-lisp":
+    self.emit("quit");
+    return;
   default:
 	  var method = d.form.name.split(":")[1].replace(/-/g,'_');	// FIXME Brittle code, Expects ":" to be in the form name
     console.log("Unfound Command, Trying to run: "+method);
     if (this.messageHandlers.hasOwnProperty(method)) {
-      this.messageHandlers[method](d.form);		
+      this.messageHandlers[method](d.form, self, r);
 	}
     // FIXME: handle unknown commands
   }
