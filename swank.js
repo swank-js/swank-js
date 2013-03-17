@@ -66,7 +66,9 @@ var swankServer = net.createServer(
         handler.removeAllListeners("response");
       });
   });
-swankServer.listen(process.argv[2] || 4005, process.argv[3] || "localhost");
+exports.startSwankServer = function startSwankServer(port, host) {
+  swankServer.listen(port || 4005, host || "localhost");
+};
 
 function BrowserRemote (clientInfo, client) {
   var userAgent = ua.recognize(clientInfo.userAgent);
@@ -448,29 +450,32 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
 var httpListener = new HttpListener(cfg);
 var httpServer = http.createServer(httpListener.serveClient.bind(httpListener));
 
-httpServer.listen(8009);
-io = io.listen(httpServer);
+exports.startSocketIOServer = function startSocketIOServer(port, host) {
+  httpServer.listen(port || 8009, host);
+  io = io.listen(httpServer);
 
-io.sockets.on(
-  "connection", function (client) {
-    // new client is here!
-    console.log("client connected");
-    function handleHandshake (message) {
-      message = JSON.parse(message);
-      client.removeListener("message", handleHandshake);
-      if (!message.hasOwnProperty("op") || message.op != "handshake")
-        console.warn("WARNING: skipping pre-handshake message: %j", message);
-      else {
-        var address = null;
-        if (client.connection && client.connection.remoteAddress)
-          address = client.connection.remoteAddress || "noaddress";
-        var remote = new BrowserRemote({ address: address, userAgent: message.userAgent || "" }, client);
-        executive.attachRemote(remote);
-        console.log("added remote: %s", remote.fullName());
-      }
-    };
-    client.on("message", handleHandshake);
-  });
+  io.sockets.on(
+    "connection", function (client) {
+      // new client is here!
+      console.log("client connected");
+      function handleHandshake (message) {
+        message = JSON.parse(message);
+        client.removeListener("message", handleHandshake);
+        if (!message.hasOwnProperty("op") || message.op != "handshake")
+          console.warn("WARNING: skipping pre-handshake message: %j", message);
+        else {
+          var address = null;
+          if (client.connection && client.connection.remoteAddress)
+            address = client.connection.remoteAddress || "noaddress";
+          var remote = new BrowserRemote({ address: address, userAgent: message.userAgent || "" }, client);
+          executive.attachRemote(remote);
+          console.log("added remote: %s", remote.fullName());
+        }
+      };
+      client.on("message", handleHandshake);
+    }
+  );
+};
 
 // TBD: handle reader errors
 
