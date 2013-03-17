@@ -47,6 +47,7 @@ var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp
 var Completion = require("./completion").Completion;
 
 var DEFAULT_SLIME_VERSION = "2012-02-12";
+var console = { log: function(){} };
 
 // hack for require.resolve("./relative") to work properly.
 module.filename = process.cwd() + '/repl';

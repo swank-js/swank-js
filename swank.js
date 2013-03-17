@@ -41,6 +41,7 @@ var CONFIG_FILE_NAME = "~/.swankjsrc";
 
 var cfg = new config.Config(CONFIG_FILE_NAME);
 var executive = new swh.Executive({ config: cfg });
+var console = { log: function(){} };
 
 var swankServer = net.createServer(
   function (stream) {
