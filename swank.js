@@ -42,6 +42,7 @@ var CONFIG_FILE_NAME = "~/.swankjsrc";
 var cfg = new config.Config(CONFIG_FILE_NAME);
 var executive = new swh.Executive({ config: cfg });
 var console = { log: function(){} };
+var isEmbedded = !!module.parent;
 
 var swankServer = net.createServer(
   function (stream) {
@@ -75,6 +76,7 @@ var swankServer = net.createServer(
 exports.startSwankServer = function startSwankServer(port, host) {
   swankServer.listen(port || 4005, host || "localhost");
 };
+if (!isEmbedded) exports.startSwankServer(process.argv[2], process.argv[3]);
 
 function BrowserRemote (clientInfo, client) {
   var userAgent = ua.recognize(clientInfo.userAgent);
@@ -482,6 +484,7 @@ exports.startSocketIOServer = function startSocketIOServer(port, host) {
     }
   );
 };
+if (!isEmbedded) exports.startSocketIOServer(8009);
 
 // TBD: handle reader errors
 
