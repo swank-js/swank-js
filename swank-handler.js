@@ -34,7 +34,8 @@ function evalcx(code, context, filename) {
     return vm.runInThisContext(code, filename);
   } catch (err) {
     var regex = new RegExp('(at ' + filename + ':.*)[\\s\\S]*');
-    err.stack = err.stack.replace(regex, '$1');
+    var syntaxRegex = /\s*at evalcx[\s\S]*/;
+    err.stack = err.stack.replace(syntaxRegex, '').replace(regex, '$1');
     throw err;
   }
 };
