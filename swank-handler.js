@@ -28,8 +28,17 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var EventEmitter = require("events").EventEmitter;
-var Script = require('vm').Script;
-var evalcx = Script.runInContext;
+var vm = require('vm'), Script = vm.Script;
+function evalcx(code, context, filename) {
+  try {
+    return vm.runInThisContext(code, filename);
+  } catch (err) {
+    var regex = new RegExp('(at ' + filename + ':.*)[\\s\\S]*');
+    var syntaxRegex = /\s*at evalcx[\s\S]*/;
+    err.stack = err.stack.replace(syntaxRegex, '').replace(regex, '$1');
+    throw err;
+  }
+};
 var util = require("util");
 var url = require("url");
 var assert = require("assert");
@@ -39,6 +48,7 @@ var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp
 var Completion = require("./completion").Completion;
 
 var DEFAULT_SLIME_VERSION = "2012-02-12";
+var console = { log: function(){} };
 
 // hack for require.resolve("./relative") to work properly.
 module.filename = process.cwd() + '/repl';
@@ -62,12 +72,6 @@ util.inherits(Handler, EventEmitter);
  * 
  */
 Handler.prototype.messageHandlers = {};
-
-Handler.prototype.messageHandlers.quit_lisp = function(f) {
-	// TBD Maybe the remotes should be contacted so they can shut themselves down gracefully as well?
-    console.log("Quitting Swank!");
-	process.exit(0);
-}
 
 Handler.prototype.receive = function receive (message) {
   // FIXME: error handling
@@ -209,11 +213,14 @@ Handler.prototype.receive = function receive (message) {
         cont();
       });
     return;
+  case "swank:quit-lisp":
+    self.emit("quit");
+    return;
   default:
 	  var method = d.form.name.split(":")[1].replace(/-/g,'_');	// FIXME Brittle code, Expects ":" to be in the form name
     console.log("Unfound Command, Trying to run: "+method);
     if (this.messageHandlers.hasOwnProperty(method)) {
-      this.messageHandlers[method](d.form);		
+      this.messageHandlers[method](d.form, self, r);
 	}
     // FIXME: handle unknown commands
   }
@@ -324,7 +331,6 @@ util.inherits(DefaultRemote, Remote);
 DefaultRemote.prototype.completer = function completer () {
   return new Completion(
     {
-      global: this.context,
       evaluate: function (str) {
         return evalcx(str, this.context, "repl");
       }.bind(this)
