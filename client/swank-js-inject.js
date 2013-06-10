@@ -2,9 +2,6 @@
  * Add this script to your html file to connect to swank-js
  */
 
-if (!window.exports)
-  window.exports = {}; // FIXME: this may break something
-
 if (!window.swank_server)
   window.swank_server = document.location.protocol + "//" + document.location.host + "/";
 

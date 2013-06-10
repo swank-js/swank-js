@@ -116,4 +116,5 @@ Completion.prototype.escapeRegex = function escapeRegex (str) {
   return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
 };
 
-exports.Completion = Completion;
+if (typeof exports === "object")
+  exports.Completion = Completion;
