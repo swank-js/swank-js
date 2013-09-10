@@ -92,8 +92,12 @@ If you want swank-js to run on a differnet port, add it as the third element to 
   (interactive)
   (setq slime-js-swank-buffer (apply #'make-comint "swank-js"  (expand-file-name slime-js-swank-command) nil slime-js-swank-args)))
 
+(defun slime-js-active-p ()
+  (and (slime-connected-p)
+       (equal "JS" (slime-lisp-implementation-type))))
+
 (defun slime-js-event-hook-function (event)
-  (when (equal "JS" (slime-lisp-implementation-type))
+  (when (slime-js-active-p)
     (destructure-case event
       ((:new-package package prompt)
        (let ((buffer (slime-connection-output-buffer)))
@@ -381,6 +385,17 @@ and embed it in a style element"
       (slime-js-eval
        (buffer-substring-no-properties start end))
       (message "Sent buffer"))))
+
+(defun slime-js-reload-requirejs-module (path)
+  ;; TBD: should pass in physical path
+  ;; make it possible to do per-project definitions
+  ;; on the server side to map it to requirejs path
+  (lexical-let ((path path))
+    (slime-js-eval
+     (format "SwankJS.reloadRequireJSModule(%s)"
+             (slime-js-make-js-string path))
+     #'(lambda (v)
+         (message "Reloading %s" path)))))
 
 (define-minor-mode slime-js-minor-mode
   "Toggle slime-js minor mode

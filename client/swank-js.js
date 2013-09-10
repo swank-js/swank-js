@@ -332,6 +332,26 @@ SwankJS.disconnect = function disconnect () {
   }
 };
 
+SwankJS.reloadRequireJSModule = function reloadRequireJSModule (path, cont) {
+  if (typeof requirejs === "undefined") {
+    this.output("SwankJS.reloadRequireJSModule(): no RequireJS detected\n");
+    return;
+  }
+  var paths = requirejs.s.contexts._.config.paths || {},
+      module = path.replace(/^\/+|\.js$/i, "");
+  for (var mod in paths) {
+    if (paths.hasOwnProperty(mod) && module == paths[mod]) {
+      module = mod;
+      break;
+    }
+  }
+  requirejs.undef(module);
+  requirejs([ module ], function (module) {
+    if (cont)
+      cont(module);
+  });
+};
+
 if (isNode) {
     module.exports = SwankJS;
 }
