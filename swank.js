@@ -181,6 +181,7 @@ HttpListener.prototype.clientFiles = {
   'load.js': 'client/load.js',
   'swank-js-inject.js': 'client/swank-js-inject.js',
   'browser-tests.js': 'client/browser-tests.js',
+  'require-swank-js.js': 'client/require-swank-js.js',
   'test.html': 'client/test.html',
   'completion.js': 'completion.js'
 };
