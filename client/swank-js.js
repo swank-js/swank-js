@@ -99,6 +99,35 @@ SwankJS.makeSocketHandler = function makeSocketHandler (func) {
 
 SwankJS.url = null;
 
+SwankJS._eval = function _eval (code, success, error, rec) {
+  var self = this, match = !rec && code.match(/^:(.*?):(.*)/);
+  if (match) {
+    var module = match[1], innerCode = match[2];
+    requirejs([ module ], function (module) {
+      window.__swankjs_module__ = module;
+      console.log("mod %o inner %s", module, innerCode);
+      self._eval("__swankjs_module__" + (innerCode ? "." + innerCode : ""), success, error, true);
+    }, function (e) {
+      self.debug("failed to load AMD module %s", module);
+      error(e);
+    });
+    return;
+  }
+  // JS reentrancy is possible. I've observed it when using XSLTProcessor
+  self.evaluating = true;
+  try {
+    var r = window.eval(code);
+  } catch (e) {
+    if (error) error(e);
+    return;
+  } finally {
+    // don't let the connection break due to missed pings when evaluation takes too long
+    self.lastMessageTime = new Date().getTime();
+    self.evaluating = false;
+  }
+  success(r);
+};
+
 SwankJS.setupSocket = function setupSocket (url) {
   if (url) this.url = url;
   this.socket = io.connect(this.url, { "force new connection": true });
@@ -152,11 +181,22 @@ SwankJS.setupSocket = function setupSocket (url) {
         }
 
         self.debug("eval: %o", m);
-        // JS reentrancy is possible. I've observed it when using XSLTProcessor
-        self.evaluating = true;
-        try {
-          var r = window.eval(m.code);
-        } catch (e) {
+        self._eval(m.code, function (r) {
+          var resultString;
+          try {
+            resultString = String(r);
+          } catch(e) {
+            resultString = "Error stringifying result: " + e;
+          }
+          self.debug("result = %s", resultString);
+          self.socket.send(
+            JSON.stringify({
+              "op": "result",
+              "id": m.id,
+              "error": null,
+              "values": [resultString]
+            }));
+        }, function (e) {
           var message = String(e);
           if (message == "[object Error]") {
             try {
@@ -165,35 +205,12 @@ SwankJS.setupSocket = function setupSocket (url) {
           }
           self.debug("error = %s", message);
           self.socket.send(
-            JSON.stringify(
-              { "op": "result",
-                "id": m.id,
-                "error": message + "\n" + swank_printStackTrace({ e: e }).join("\n")
-              }
-            )
-          );
-          return;
-        } finally {
-          // don't let the connection break due to missed pings when evaluation takes too long
-          self.lastMessageTime = new Date().getTime();
-          self.evaluating = false;
-        }
-        var resultString;
-        try {
-          resultString = String(r);
-        } catch(e) {
-          resultString = "Error stringifying result: " + e;
-        }
-        self.debug("result = %s", resultString);
-        self.socket.send(
-          JSON.stringify(
-            { "op": "result",
+            JSON.stringify({
+              "op": "result",
               "id": m.id,
-              "error": null,
-              "values": [resultString]
-            }
-          )
-        );
+              "error": message + "\n" + swank_printStackTrace({ e: e }).join("\n")
+            }));
+        });
       }));
   this.socket.on(
     "disconnect",
