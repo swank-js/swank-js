@@ -99,6 +99,15 @@ SwankJS.makeSocketHandler = function makeSocketHandler (func) {
 
 SwankJS.url = null;
 
+// SwankJS.stringifyResult() can be overridden by the user
+SwankJS.stringifyResult = function stringifyResult (r) {
+  try {
+    return String(r);
+  } catch (e) {
+    return "Error stringifying result: " + e;
+  }
+};
+
 SwankJS._eval = function _eval (code, success, error, rec) {
   var self = this, match = !rec && code.match(/^:(.*?):(.*)/);
   if (match) {
@@ -182,12 +191,7 @@ SwankJS.setupSocket = function setupSocket (url) {
 
         self.debug("eval: %o", m);
         self._eval(m.code, function (r) {
-          var resultString;
-          try {
-            resultString = String(r);
-          } catch(e) {
-            resultString = "Error stringifying result: " + e;
-          }
+          var resultString = self.stringifyResult(r);
           self.debug("result = %s", resultString);
           self.socket.send(
             JSON.stringify({
