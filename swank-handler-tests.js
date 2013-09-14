@@ -277,6 +277,25 @@ request('(:emacs-rex (js:set-slime-version "2010-11-28") "NODE" :repl-thread 30)
 
 assert.equal("2010-11-28", cfg.getNow("slimeVersion"));
 
+cfg.setProfile("whatever", {
+  stickyRemote: "(browser) Chrome27.0",
+  targetUrl: "http://localhost:9999/"
+});
+
+cfg.setProfile("another", {
+  stickyRemote: "(browser) Chrome28.0",
+  targetUrl: "http://localhost:9990/"
+});
+
+request('(:emacs-rex (js:list-profiles) "NODE" :repl-thread 31)',
+        '(:return (:ok ("another" "whatever")) 31)');
+
+request('(:emacs-rex (js:use-profile "whatever") "NODE" :repl-thread 32)',
+        '(:return (:ok nil) 32)');
+
+assert.equal("http://localhost:9999/", cfg.getNow("targetUrl"));
+assert.equal("(browser) Chrome27.0", cfg.getNow("stickyRemote"));
+
 // TBD: use ## instead of numbers in the tests above (request() should take care of it)
 // TBD: test output from an inactive remote
 // TBD: are out-of-order results for :emacs-rex ok? look at slime sources

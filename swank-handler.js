@@ -69,7 +69,7 @@ util.inherits(Handler, EventEmitter);
  * A handler name is a simply transformed command from lisp.
  * The "swank:" is removed, and - is turned into _
  * so "swank:quit-lisp" becomes "quit_lisp".
- * 
+ *
  */
 Handler.prototype.messageHandlers = {};
 
@@ -154,6 +154,7 @@ Handler.prototype.receive = function receive (message) {
     break;
   case "js:set-target-url":
   case "js:set-slime-version":
+  case "js:use-profile":
     if (d.form.args.length != 1) {
       console.log("bad args len for JS:SET-TARGET-URL -- %s", d.form.args.length);
       return; // FIXME
@@ -167,7 +168,12 @@ Handler.prototype.receive = function receive (message) {
       }
       throw e;
     }
-    this.executive[d.form.name == "js:set-target-url" ? "setTargetUrl" : "setSlimeVersion"](expr);
+    this.executive[d.form.name == "js:set-target-url" ? "setTargetUrl" :
+                   d.form.name == "js:use-profile" ? "useProfile" :
+                   "setSlimeVersion"](expr);
+    break;
+  case "js:list-profiles":
+    r.result = toLisp(this.executive.listProfiles());
     break;
   case "js:list-module-paths":
     r.result = toLisp({ paths: module.paths }, [S(":paths"), "R:paths"]);
@@ -316,12 +322,12 @@ function DefaultRemote () {
     },
 
     inspect: function inspect () {
-      Array.prototype.forEach.call(arguments, function (arg) {      
+      Array.prototype.forEach.call(arguments, function (arg) {
         self.output(util.inspect(arg, false, 10));
         self.output('\n');
-      }); 
+      });
     }
-    
+
   };
   this.context.inspect = this.context._swank.inspect;
 }
@@ -503,6 +509,14 @@ Executive.prototype.setTargetUrl = function setTargetUrl (targetUrl) {
 
 Executive.prototype.setSlimeVersion = function setSlimeVersion (slimeVersion) {
   this.config.set("slimeVersion", slimeVersion);
+};
+
+Executive.prototype.listProfiles = function listProfiles () {
+  return this.config.profileNames();
+};
+
+Executive.prototype.useProfile = function useProfile (name) {
+  this.config.useProfile(name);
 };
 
 exports.Handler = Handler;

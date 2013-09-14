@@ -175,6 +175,26 @@ If you want swank-js to run on a differnet port, add it as the third element to 
   (:handler 'slime-js-set-slime-version)
   (:one-liner "Set SLIME version for swank-js"))
 
+(defvar slime-js-profile-history nil
+  "History list for JS profile names.")
+
+(defun slime-js-read-profile-name (&optional prompt)
+  (let* ((completion-ignore-case nil)
+         (profile-names (slime-eval '(js:list-profiles)))
+         (prompt (or prompt "Profile: ")))
+    (completing-read prompt (slime-bogus-completion-alist profile-names)
+                     nil nil nil
+                     'slime-js-profile-history nil)))
+
+(defun slime-js-use-profile (name)
+  "Select JS remote by number"
+  (interactive (list (slime-js-read-profile-name)))
+  (slime-eval-async `(js:use-profile ,name)))
+
+(defslime-repl-shortcut slime-repl-js-use-profile ("use-profile")
+  (:handler 'slime-js-use-profile)
+  (:one-liner "Use the specified profile"))
+
 (defvar slime-js-require-history nil
   "History list for slime-js ,require command (`slime-js-require')")
 
