@@ -31,7 +31,7 @@ var EventEmitter = require("events").EventEmitter;
 var vm = require('vm'), Script = vm.Script;
 function evalcx(code, context, filename) {
   try {
-    return vm.runInThisContext(code, filename);
+    return vm.runInContext(code, context, filename);
   } catch (err) {
     var regex = new RegExp('(at ' + filename + ':.*)[\\s\\S]*');
     var syntaxRegex = /\s*at evalcx[\s\S]*/;
