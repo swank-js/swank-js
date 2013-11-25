@@ -122,7 +122,7 @@ Handler.prototype.receive = function receive (message) {
     r.result = toLisp(this.executive.createRepl(), ["s:packageName", "s:prompt"]);
     break;
   case "swank:autodoc":
-    r.result = S(":not-available");
+    r.result = list(S(":not-available"), S("t"));
     break;
   case "js:list-remotes":
     // FIXME: support 'list of similar elements' type spec
