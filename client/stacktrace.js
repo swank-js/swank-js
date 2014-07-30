@@ -355,4 +355,5 @@ swank_printStackTrace.implementation.prototype = {
     }
 };
 
-exports.swank_printStackTrace = swank_printStackTrace;
+if (typeof exports !== "undefined")
+    exports.swank_printStackTrace = swank_printStackTrace;
