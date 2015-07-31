@@ -300,7 +300,10 @@ Remote.prototype.sendResult = function sendResult (id, values) {
 };
 
 function DefaultRemote () {
-  this.context = Script.createContext();
+    // https://github.com/jashkenas/coffeescript/issues/3498
+    // newer version of node uses vm.createContext(), so Script.createContext fails
+    this.context = (Script.createContext || vm.createContext)(); 
+    
   for (var i in global) this.context[i] = global[i];
   this.context.module = module;
   this.context.require = function(id, options) {
