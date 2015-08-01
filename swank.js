@@ -272,27 +272,7 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
   request.headers["host"] = hostname + (port == 80 ? "" : ":" + port);
   delete request.headers["accept-encoding"]; // we don't want gzipped pages, do we?
 
-  // note on http client error handling:
-  // http://rentzsch.tumblr.com/post/664884799/node-js-handling-refused-http-client-connections
-  var proxy = http.createClient(port, hostname);
-  proxy.addListener(
-    'error', function handleError (e) {
-      console.log("proxy error: %s", e);
-      if (done)
-        return;
-      if (headersSent) {
-        response.end();
-        return;
-      }
-      response.writeHead(502, {'Content-Type': 'text/plain; charset=utf-8'});
-      response.end("swank-js: unable to forward the request");
-  });
-
-  console.log("PROXY: %s %s", request.method, request.url);
-  var proxyRequest = proxy.request(request.method, request.url, request.headers);
-
-  proxyRequest.addListener(
-    'response', function (proxyResponse) {
+    var onResponse = function (proxyResponse) {
       var contentType = proxyResponse.headers["content-type"];
       var statusCode = proxyResponse.statusCode;
       console.log("==> status %s", statusCode);
@@ -309,7 +289,7 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
         response.writeHead(statusCode, headers);
         headersSent = true;
       }
-      proxyResponse.addListener(
+      proxyResponse.on(
         'data', function (chunk) {
           if (chunks !== null) {
             chunks.push(chunk);
@@ -321,7 +301,7 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
           }
           response.write(chunk, 'binary');
         });
-      proxyResponse.addListener(
+      proxyResponse.on(
         'end', function() {
           if (chunks !== null) {
             console.log("^^MOD: %s %s", request.method, request.url);
@@ -345,12 +325,41 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
           response.end();
           done = true;
         });
-    });
-  request.addListener(
+    };
+  // note on http client error handling:
+    // http://rentzsch.tumblr.com/post/664884799/node-js-handling-refused-http-client-connections
+    
+    // this is deprecated
+    // var proxy = http.createClient(port, hostname);
+    var proxyRequest = http.request({
+	hostname:hostname, 
+	port:port, 
+	path:request.url,
+	method:request.method,
+	headers:request.headers, 
+    }, onResponse);
+    
+  proxyRequest.on(
+    'error', function handleError (e) {
+      console.log("proxy error: %s", e);
+      if (done)
+        return;
+      if (headersSent) {
+        response.end();
+        return;
+      }
+      response.writeHead(502, {'Content-Type': 'text/plain; charset=utf-8'});
+      response.end("swank-js: unable to forward the request");
+  });
+
+  console.log("PROXY: %s %s", request.method, request.url);
+  // var proxyRequest = proxy.request(request.method, request.url, request.headers);
+  
+  proxyRequest.on(
     'data', function(chunk) {
       proxyRequest.write(chunk, 'binary');
     });
-  request.addListener(
+  proxyRequest.on(
     'end', function() {
       proxyRequest.end();
     });
