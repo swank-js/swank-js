@@ -45,8 +45,13 @@ Completion.prototype.enumerate = function enumerate (obj, func) {
 
 if (Object.getOwnPropertyNames && ({}).__proto__) {
   Completion.prototype.getAllProperties = function getAllProperties (obj, func) {
-    for (; obj; obj = obj.__proto__)
-      Object.getOwnPropertyNames(obj).forEach(func);
+    for (; obj !== null && obj !== undefined; obj = obj.__proto__) {
+      // Prevent Object.getOwnPropertyNames throwing an error on
+      // unboxed types (number, string, boolean)
+      if(typeof obj !== 'number' && typeof obj !== 'string'
+         && typeof obj !== 'boolean')
+        Object.getOwnPropertyNames(obj).forEach(func);
+    }
   };
 } else {
   Completion.prototype.getAllProperties = Completion.prototype.enumerate;
@@ -64,14 +69,15 @@ Completion.prototype.dotCompletion = function dotCompletion (str, regex, skipPre
     console.log("completion eval error: %s", e);
     obj = null;
   }
-  if (!obj)
+  if (obj === null || obj === undefined)
     return [];
   var r = [];
   getProps(
     obj, function (name) {
+      // Filter out numeric indices
+      if (name.match(/^[0-9]*$/)) return;
       if (regex) {
-        if (name.match(regex))
-          r.push(addPrefix + name);
+        if (name.match(regex)) r.push(addPrefix + name);
       } else {
         r.push(addPrefix + name);
       }
@@ -85,7 +91,8 @@ Completion.prototype.nameCompletion = function nameCompletion(str) {
   var parent = dotIndex >= 0 ? str.substring(0, dotIndex) : null;
   var strToComplete = str.substring(dotIndex + 1, str.length);
   // console.log("dotIndex %s, strToComplete %s", dotIndex, strToComplete);
-  return this.dotCompletion(parent, new RegExp("^" + strToComplete), dotIndex < 0);
+  var strRegex = new RegExp("^" + this.escapeRegex(strToComplete));
+  return this.dotCompletion(parent, strRegex, dotIndex < 0);
 };
 
 Completion.prototype.doCompletion = function doCompletion (str) {
@@ -105,4 +112,9 @@ Completion.prototype.complete = function complete (prefix) {
   return { values: values, partial: partial };
 };
 
-exports.Completion = Completion;
+Completion.prototype.escapeRegex = function escapeRegex (str) {
+  return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
+};
+
+if (typeof exports !== "undefined")
+    exports.Completion = Completion;

@@ -58,6 +58,7 @@ addObjectToGlobal(
                      completion.complete("testPropCompletion.foo.b"));
     assert.deepEqual({ values: [], partial: "testPropCompletion.foo.baz" },
                      completion.complete("testPropCompletion.foo.baz"));
+    process.stdout.write("'completion eval error: TypeError' is expected: ");
     assert.deepEqual({ values: [], partial: "testPropCompletion.fooz.bar.qqq" },
                      completion.complete("testPropCompletion.fooz.bar.qqq"));
   });

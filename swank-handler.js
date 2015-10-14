@@ -28,8 +28,17 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var EventEmitter = require("events").EventEmitter;
-var Script = require('vm').Script;
-var evalcx = Script.runInContext;
+var vm = require('vm'), Script = vm.Script;
+function evalcx(code, context, filename) {
+  try {
+    return vm.runInThisContext(code, filename);
+  } catch (err) {
+    var regex = new RegExp('(at ' + filename + ':.*)[\\s\\S]*');
+    var syntaxRegex = /\s*at evalcx[\s\S]*/;
+    err.stack = err.stack.replace(syntaxRegex, '').replace(regex, '$1');
+    throw err;
+  }
+};
 var util = require("util");
 var url = require("url");
 var assert = require("assert");
@@ -39,6 +48,7 @@ var S = lisp.S, list = lisp.list, consp = lisp.consp, car = lisp.car, cdr = lisp
 var Completion = require("./completion").Completion;
 
 var DEFAULT_SLIME_VERSION = "2012-02-12";
+var console = { log: function(){} };
 
 // hack for require.resolve("./relative") to work properly.
 module.filename = process.cwd() + '/repl';
@@ -62,12 +72,6 @@ util.inherits(Handler, EventEmitter);
  * 
  */
 Handler.prototype.messageHandlers = {};
-
-Handler.prototype.messageHandlers.quit_lisp = function(f) {
-	// TBD Maybe the remotes should be contacted so they can shut themselves down gracefully as well?
-    console.log("Quitting Swank!");
-	process.exit(0);
-}
 
 Handler.prototype.receive = function receive (message) {
   // FIXME: error handling
@@ -118,7 +122,7 @@ Handler.prototype.receive = function receive (message) {
     r.result = toLisp(this.executive.createRepl(), ["s:packageName", "s:prompt"]);
     break;
   case "swank:autodoc":
-    r.result = S(":not-available");
+    r.result = list(S(":not-available"), S("t"));
     break;
   case "js:list-remotes":
     // FIXME: support 'list of similar elements' type spec
@@ -165,6 +169,12 @@ Handler.prototype.receive = function receive (message) {
     }
     this.executive[d.form.name == "js:set-target-url" ? "setTargetUrl" : "setSlimeVersion"](expr);
     break;
+  case "js:list-module-paths":
+    r.result = toLisp({ paths: module.paths }, [S(":paths"), "R:paths"]);
+    break;
+  case "js:module-filename":
+    r.result = toLisp({ filename: module.filename }, [S(":filename"), "s:filename"]);
+    break;
   case "swank:interactive-eval":
   case "swank:interactive-eval-region":
   case "swank:listener-eval":
@@ -203,11 +213,14 @@ Handler.prototype.receive = function receive (message) {
         cont();
       });
     return;
+  case "swank:quit-lisp":
+    self.emit("quit");
+    return;
   default:
 	  var method = d.form.name.split(":")[1].replace(/-/g,'_');	// FIXME Brittle code, Expects ":" to be in the form name
     console.log("Unfound Command, Trying to run: "+method);
     if (this.messageHandlers.hasOwnProperty(method)) {
-      this.messageHandlers[method](d.form);		
+      this.messageHandlers[method](d.form, self, r);
 	}
     // FIXME: handle unknown commands
   }
@@ -287,7 +300,10 @@ Remote.prototype.sendResult = function sendResult (id, values) {
 };
 
 function DefaultRemote () {
-  this.context = Script.createContext();
+    // https://github.com/jashkenas/coffeescript/issues/3498
+    // newer version of node uses vm.createContext(), so Script.createContext fails
+    this.context = (Script.createContext || vm.createContext)(); 
+    
   for (var i in global) this.context[i] = global[i];
   this.context.module = module;
   this.context.require = function(id, options) {
@@ -300,8 +316,17 @@ function DefaultRemote () {
   this.context._swank = {
     output: function output (arg) {
       self.output(arg);
+    },
+
+    inspect: function inspect () {
+      Array.prototype.forEach.call(arguments, function (arg) {      
+        self.output(util.inspect(arg, false, 10));
+        self.output('\n');
+      }); 
     }
+    
   };
+  this.context.inspect = this.context._swank.inspect;
 }
 
 util.inherits(DefaultRemote, Remote);
@@ -309,7 +334,6 @@ util.inherits(DefaultRemote, Remote);
 DefaultRemote.prototype.completer = function completer () {
   return new Completion(
     {
-      global: this.context,
       evaluate: function (str) {
         return evalcx(str, this.context, "repl");
       }.bind(this)
