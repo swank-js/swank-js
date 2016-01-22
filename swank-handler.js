@@ -118,7 +118,7 @@ Handler.prototype.receive = function receive (message) {
         cont();
       });
     return;
-  case "swank:create-repl":
+  case "swank-repl:create-repl":
     r.result = toLisp(this.executive.createRepl(), ["s:packageName", "s:prompt"]);
     break;
   case "swank:autodoc":
@@ -177,7 +177,7 @@ Handler.prototype.receive = function receive (message) {
     break;
   case "swank:interactive-eval":
   case "swank:interactive-eval-region":
-  case "swank:listener-eval":
+  case "swank-repl:listener-eval":
     if (d.form.args.length != 1) {
       console.log("bad args len for SWANK:LISTENER-EVAL -- %s", d.form.args.length);
       return; // FIXME
