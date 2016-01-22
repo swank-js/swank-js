@@ -90,7 +90,7 @@ request('(:emacs-rex (swank-repl:listener-eval "undefined") "NODE" :repl-thread 
 
 request('(:emacs-rex (swank:autodoc \'("zzzz" swank::%cursor-marker%) :print-right-margin 236)' +
         ' "COMMON-LISP-USER" :repl-thread 6)',
-        '(:return (:ok :not-available) 6)');
+        '(:return (:ok (:not-available t)) 6)');
 
 request('(:emacs-rex (swank-repl:listener-eval "_swank.output(\'hello world\\\\n\')") "NODE" :repl-thread 7)',
         '(:write-string "hello world\n")',
