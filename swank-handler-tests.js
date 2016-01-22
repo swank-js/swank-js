@@ -79,13 +79,13 @@ request('(:emacs-rex (swank:connection-info) "COMMON-LISP-USER" t 1)',
 request('(:emacs-rex (swank:swank-require \'(swank-listener-hooks swank-indentation)) "COMMON-LISP-USER" t 2)',
         '(:return (:ok nil) 2)');
 
-request('(:emacs-rex (swank:create-repl nil) "COMMON-LISP-USER" t 3)',
+request('(:emacs-rex (swank-repl:create-repl nil) "COMMON-LISP-USER" t 3)',
         '(:return (:ok ("NODE" "NODE")) 3)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 4)',
+request('(:emacs-rex (swank-repl:listener-eval "3 * 10\n") "NODE" :repl-thread 4)',
         '(:return (:ok (:values "30")) 4)');
 
-request('(:emacs-rex (swank:listener-eval "undefined") "NODE" :repl-thread 5)',
+request('(:emacs-rex (swank-repl:listener-eval "undefined") "NODE" :repl-thread 5)',
         '(:return (:ok nil) 5)');
 
 request('(:emacs-rex (swank:autodoc \'("zzzz" swank::%cursor-marker%) :print-right-margin 236)' +
