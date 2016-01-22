@@ -27,7 +27,8 @@
     "socket.io-client": ">=0.9"
   },
   "scripts": {
-    "swank": "node ./swank.js"
+    "swank": "node ./swank.js",
+		"test": "./tests.js"
   },
   "licenses": [{
     "type" : "X11-style",
