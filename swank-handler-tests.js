@@ -92,15 +92,15 @@ request('(:emacs-rex (swank:autodoc \'("zzzz" swank::%cursor-marker%) :print-rig
         ' "COMMON-LISP-USER" :repl-thread 6)',
         '(:return (:ok :not-available) 6)');
 
-request('(:emacs-rex (swank:listener-eval "_swank.output(\'hello world\\\\n\')") "NODE" :repl-thread 7)',
+request('(:emacs-rex (swank-repl:listener-eval "_swank.output(\'hello world\\\\n\')") "NODE" :repl-thread 7)',
         '(:write-string "hello world\n")',
         '(:return (:ok nil) 7)');
 
-request('(:emacs-rex (swank:listener-eval "_swank.output(1234)") "NODE" :repl-thread 8)',
+request('(:emacs-rex (swank-repl:listener-eval "_swank.output(1234)") "NODE" :repl-thread 8)',
         '(:write-string "1234")',
         '(:return (:ok nil) 8)');
 
-request('(:emacs-rex (swank:listener-eval "zzz") "NODE" :repl-thread 9)',
+request('(:emacs-rex (swank-repl:listener-eval "zzz") "NODE" :repl-thread 9)',
         /^\(:write-string "ReferenceError: zzz is not defined(.|\n)*"\)$/,
         '(:return (:ok nil) 9)');
 
@@ -149,7 +149,7 @@ request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 12)',
         '(2 :test "test/localhost:8080" nil) ' +
         '(3 :test "test/localhost:9999" nil))) 12)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 13)',
+request('(:emacs-rex (swank-repl:listener-eval "3 * 10\n") "NODE" :repl-thread 13)',
         '(:return (:ok (:values "30")) 13)');
 
 request('(:emacs-rex (js:select-remote 2 nil) "NODE" :repl-thread 14)',
@@ -162,7 +162,7 @@ request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 15)',
         '(2 :test "test/localhost:8080" t) ' +
         '(3 :test "test/localhost:9999" nil))) 15)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 16)',
+request('(:emacs-rex (swank-repl:listener-eval "3 * 10\n") "NODE" :repl-thread 16)',
         '(:return (:ok (:values "R:test/localhost:8080:3 * 10")) 16)');
 
 expect('(:write-string "Remote detached: (test) test/localhost:8080\n")',
@@ -171,7 +171,7 @@ expect('(:write-string "Remote detached: (test) test/localhost:8080\n")',
 r1.disconnect();
 verifyExpectations();
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 17)',
+request('(:emacs-rex (swank-repl:listener-eval "3 * 10\n") "NODE" :repl-thread 17)',
         '(:return (:ok (:values "30")) 17)');
 
 // TBD: add higher-level functions for testing remotes
@@ -184,7 +184,7 @@ expect('(:write-string "Remote detached: (test) test/localhost:9999\n")');
 r2.disconnect();
 verifyExpectations();
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 19)',
+request('(:emacs-rex (swank-repl:listener-eval "3 * 10\n") "NODE" :repl-thread 19)',
         '(:return (:ok (:values "30")) 19)');
 
 request('(:emacs-rex (js:list-remotes) "NODE" :repl-thread 20)',
@@ -194,7 +194,7 @@ request('(:emacs-rex (js:select-remote 2 nil) "NODE" :repl-thread 21)',
         '(:write-string "WARNING: bad remote index\n")',
         '(:return (:ok nil) 21)');
 
-request('(:emacs-rex (swank:listener-eval "3 * 10\n") "NODE" :repl-thread 22)',
+request('(:emacs-rex (swank-repl:listener-eval "3 * 10\n") "NODE" :repl-thread 22)',
         '(:return (:ok (:values "30")) 22)');
 
 request('(:emacs-rex (js:select-remote 1 nil) "NODE" :repl-thread 23)',
