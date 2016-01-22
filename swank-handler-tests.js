@@ -104,6 +104,9 @@ request('(:emacs-rex (swank-repl:listener-eval "zzz") "NODE" :repl-thread 9)',
         /^\(:write-string "ReferenceError: zzz is not defined(.|\n)*"\)$/,
         '(:return (:ok nil) 9)');
 
+// will get (:write-string require is not defined without fix
+request('(:emacs-rex (swank-repl:listener-eval "var vm = require(\'vm\')") "NODE" :repl-thread 10)',
+        '(:return (:ok nil) 10)');
 // TBD: debugger
 
 function FakeRemote (name) {
