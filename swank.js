@@ -28,8 +28,13 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-var net = require("net"), http = require('http'), io = require('socket.io'), util = require("util"),
-    url = require('url'), fs = require('fs');
+var net = require("net"),
+    http = require('http'),
+    https = require('https'),
+    io = require('socket.io'),
+    util = require("util"),
+    url = require('url'),
+    fs = require('fs');
 var swh = require("./swank-handler");
 var swp = require("./swank-protocol");
 var ua = require("./user-agent");
@@ -37,6 +42,7 @@ var config = require("./config");
 
 var DEFAULT_TARGET_HOST = "localhost";
 var DEFAULT_TARGET_PORT = 8080;
+var DEFAULT_TARGET_PROTOCOL = http;
 var CONFIG_FILE_NAME = "~/.swankjsrc";
 
 var cfg = new config.Config(CONFIG_FILE_NAME);
@@ -260,13 +266,20 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
 
   var hostname = DEFAULT_TARGET_HOST;
   var port = DEFAULT_TARGET_PORT;
+  var protocol = DEFAULT_TARGET_PROTOCOL;
   var parsedUrl = null;
   try {
     parsedUrl = url.parse(targetUrl);
   } catch (e) {}
   if (parsedUrl && parsedUrl.hostname) {
+    if (parsedUrl.protocol.match('https:?')) {
+      protocol = https;
+      port = parsedUrl.port ? parsedUrl.port - 0 : 443;
+    } else {
+      protocol = http;
+      port = parsedUrl.port ? parsedUrl.port - 0 : 80;
+    }
     hostname = parsedUrl.hostname;
-    port = parsedUrl.port ? parsedUrl.port - 0 : 80;
   }
 
   request.headers["host"] = hostname + (port == 80 ? "" : ":" + port);
@@ -328,17 +341,17 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
     };
   // note on http client error handling:
     // http://rentzsch.tumblr.com/post/664884799/node-js-handling-refused-http-client-connections
-    
+
     // this is deprecated
     // var proxy = http.createClient(port, hostname);
-    var proxyRequest = http.request({
-	hostname:hostname, 
-	port:port, 
-	path:request.url,
-	method:request.method,
-	headers:request.headers, 
+  var proxyRequest = protocol.request({
+	    hostname:hostname,
+	    port:port,
+	    path:request.url,
+	    method:request.method,
+	    headers:request.headers,
     }, onResponse);
-    
+
   proxyRequest.on(
     'error', function handleError (e) {
       console.log("proxy error: %s", e);
@@ -354,7 +367,7 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
 
   console.log("PROXY: %s %s", request.method, request.url);
   // var proxyRequest = proxy.request(request.method, request.url, request.headers);
-  
+
   proxyRequest.on(
     'data', function(chunk) {
       proxyRequest.write(chunk, 'binary');
@@ -363,6 +376,9 @@ HttpListener.prototype.doProxyRequest = function doProxyRequest (targetUrl, requ
     'end', function() {
       proxyRequest.end();
     });
+
+  proxyRequest.end();
+  console.log("proxy request end");
 };
 
 HttpListener.prototype.getBookMarklets = function getBookMarklets() {
@@ -385,8 +401,8 @@ HttpListener.prototype.getBookMarklets = function getBookMarklets() {
 
 	//TODO: the port is a magic number.  Needs to stop being magic.
 	var out = ips.map(function(ip){
-	    var bookmarklet = escape("(function(d){window.swank_server='http://"+ip+":8009/';if(!d.getElementById('swank-js-inj')){var h=d.getElementsByTagName('head')[0],s=d.createElement('script');s.id='swank-js-inj';s.type='text/javascript';s.src=swank_server+'swank-js/swank-js-inject.js';h.appendChild(s);}})(document);");
-		return '<li><a href="javascript:'+bookmarklet +'"> Connet to slime on '+ip+'</a><br/>javascript:'+bookmarklet+'</li>';			   
+	    var bookmarklet = escape("(function(d){window.swank_server='https://"+ip+":8009/';if(!d.getElementById('swank-js-inj')){var h=d.getElementsByTagName('head')[0],s=d.createElement('script');s.id='swank-js-inj';s.type='text/javascript';s.src=swank_server+'swank-js/swank-js-inject.js';h.appendChild(s);}})(document);");
+		return '<li><a href="javascript:'+bookmarklet +'"> Connet to slime on '+ip+'</a><br/>javascript:'+bookmarklet+'</li>';
 	});
 	//console.log(out.join('\n'));
 	return out.join('\n');
@@ -403,7 +419,7 @@ HttpListener.prototype.sendCachedFile = function sendCachedFile (req, res, path)
 	var out = ((path == 'client/test.html') ? (this.cachedFiles[path].content+'').replace('<!--[[bookmarklets]]-->',this.getBookMarklets())
 			                                : this.cachedFiles[path].content);
 	//console.log(out);
-	//TBD: Remove the setting of the length header earlier on in the process. 
+	//TBD: Remove the setting of the length header earlier on in the process.
     this.cachedFiles[path].headers['Content-Length'] = Buffer(out).length;
     res.writeHead(200, this.cachedFiles[path].headers);
     res.end(out, this.cachedFiles[path].encoding);
@@ -444,8 +460,8 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
         } else {
           var ext = localPath.split('.').pop();
           self.cachedFiles[localPath] = {
-			// right now there is no difference between cached files
-            // and files inside of the client dir.  That should probably change 
+            // right now there is no difference between cached files
+            // and files inside of the client dir.  That should probably change
             // soon.
             headers: {
               'Content-Length': data.length,
@@ -465,11 +481,17 @@ HttpListener.prototype.serveClient = function serveClient(req, res) {
 };
 
 var httpListener = new HttpListener(cfg);
-var httpServer = http.createServer(httpListener.serveClient.bind(httpListener));
+
+var options = {
+  key: fs.readFileSync(process.env.HOME + '/.swankjs/swankjs.key'),
+  cert: fs.readFileSync(process.env.HOME + '/.swankjs/swankjs.crt')
+};
+
+var httpsServer = https.createServer(options, httpListener.serveClient.bind(httpListener));
 
 exports.startSocketIOServer = function startSocketIOServer(port, host) {
-  httpServer.listen(port || 8009, host);
-  io = io.listen(httpServer);
+  httpsServer.listen(port || 8009, host);
+  io = io.listen(httpsServer);
 
   io.sockets.on(
     "connection", function (client) {
