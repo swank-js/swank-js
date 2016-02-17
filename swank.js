@@ -76,7 +76,7 @@ var swankServer = net.createServer(
 exports.startSwankServer = function startSwankServer(port, host) {
   swankServer.listen(port || 4005, host || "localhost");
 };
-if (!isEmbedded) exports.startSwankServer(process.argv[2], process.argv[3]);
+if (!isEmbedded) process.title = 'swank-js'; exports.startSwankServer(process.argv[2], process.argv[3]);
 
 function BrowserRemote (clientInfo, client) {
   var userAgent = ua.recognize(clientInfo.userAgent);
