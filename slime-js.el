@@ -94,7 +94,7 @@ If you want swank-js to run on a differnet port, add it as the third element to 
 
 (defun slime-js-event-hook-function (event)
   (when (equal "JS" (slime-lisp-implementation-type))
-    (destructure-case event
+    (slime-dcase event
       ((:new-package package prompt)
        (let ((buffer (slime-connection-output-buffer)))
          (setf (slime-lisp-package) package)
