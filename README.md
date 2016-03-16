@@ -12,8 +12,8 @@ communicate with wide range of web browsers.
 Request for Contributors
 ------------------------
 
-A lot of the contributors of this project are strapped for time, and 
-we could use some more. 
+A lot of the contributors of this project are strapped for time, and
+we could use some more.
 
 Please see: https://github.com/swank-js/swank-js/issues/52
 
@@ -113,7 +113,7 @@ Usage
 If you want to use swank from the node project just add following to your
 package.json file:
 
-      { 
+      {
        	 "devDependencies": {
          "swank-js": ">=0.0.1"
         },
@@ -201,6 +201,8 @@ browser.
 
 
 ### Connecting to a remote page ###
+
+Note: When injecting in https page, modern browsers refuse to load from http addresses. See `HTTPS support` and use https://localhost:8009 !
 
 Now, let's try to make it work with an actual site. swank-js acts as a
 proxy between your browser and the site so it can inject necessary
@@ -319,6 +321,16 @@ require("swank-js/client/node").setupNodeJSClient();
 ```
 
 Optionally you can pass in *swank_server_host* and *swank_server_port* as arguments to the `setupNodeJSClient` call.
+
+HTTPS Support
+-------------
+
+To enable https support, there must be a key and certificate in ~/.swank-js. You can generate a keypair with `openssl` for example.
+
+    mkdir ~/.swank-js && cd ~/.swank-js
+    openssl req -newkey rsa:2048 -nodes \
+    	-keyout swankjs.key \
+        -out swankjs.csr
 
 Troubleshooting
 ---------------

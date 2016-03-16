@@ -30,8 +30,9 @@
 var EventEmitter = require("events").EventEmitter;
 var vm = require('vm'), Script = vm.Script;
 function evalcx(code, context, filename) {
+    var compiled_code = new Script(code,{filename: filename});
   try {
-    return vm.runInThisContext(code, filename);
+      return compiled_code.runInContext(context);
   } catch (err) {
     var regex = new RegExp('(at ' + filename + ':.*)[\\s\\S]*');
     var syntaxRegex = /\s*at evalcx[\s\S]*/;
@@ -118,7 +119,7 @@ Handler.prototype.receive = function receive (message) {
         cont();
       });
     return;
-  case "swank:create-repl":
+  case "swank-repl:create-repl":
     r.result = toLisp(this.executive.createRepl(), ["s:packageName", "s:prompt"]);
     break;
   case "swank:autodoc":
@@ -177,7 +178,7 @@ Handler.prototype.receive = function receive (message) {
     break;
   case "swank:interactive-eval":
   case "swank:interactive-eval-region":
-  case "swank:listener-eval":
+  case "swank-repl:listener-eval":
     if (d.form.args.length != 1) {
       console.log("bad args len for SWANK:LISTENER-EVAL -- %s", d.form.args.length);
       return; // FIXME
